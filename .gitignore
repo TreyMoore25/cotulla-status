@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Environment / secrets
+.env
+.env.*
+*.env
+
+# Database
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Azure CLI (contains deployment defaults, not secrets, but not needed in repo)
+# .azure/   ← keep this so az webapp up works from this folder
+
+# Logs
+*.log
+
+# Backup/scratch files
+templates/index_html.html

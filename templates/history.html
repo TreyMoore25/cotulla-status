@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cotulla Education — Historical Status</title>
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='Uptime.png') }}">
+<style>
+  :root {
+    --teal: #3dd6c8;
+    --green: #5ee8a0;
+    --dark: #0f1923;
+    --mid: #1a2d3d;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #1a202c;
+    --muted: #64748b;
+    --grad: linear-gradient(135deg, #3dd6c8, #5ee8a0);
+    --bg: #f7fafc;
+    --row-sep: #f1f5f9;
+  }
+  html[data-theme="dark"] {
+    --bg: #0d1821;
+    --card: #162334;
+    --border: rgba(255,255,255,0.09);
+    --text: #e2e8f0;
+    --muted: #8fa3b3;
+    --row-sep: rgba(255,255,255,0.05);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { font-size: 140%; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; transition: background 0.2s, color 0.2s; }
+
+  header { background: var(--dark); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 100px; width: 100%; }
+  .logo-wrap { display: flex; align-items: center; gap: 12px; }
+  .school-bar { background: #0f1923; border-bottom: 1px solid rgba(255,255,255,0.08); width: 100%; display: flex; align-items: center; justify-content: center; padding: 0.6rem 2rem; }
+  .hero { background: var(--dark); text-align: center; padding: 3rem 1rem 3.5rem; position: relative; overflow: hidden; width: 100%; }
+  .hero::before { content: ''; position: absolute; top: -60px; left: 50%; transform: translateX(-50%); width: 400px; height: 400px; background: radial-gradient(circle, rgba(61,214,200,0.12) 0%, transparent 70%); pointer-events: none; }
+  .hero-icon { width: 80px; height: 80px; margin: 0 auto 1.25rem; background: rgba(61,214,200,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(61,214,200,0.3); }
+  .hero h1 { font-size: 26px; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+  .hero p { font-size: 14px; color: rgba(255,255,255,0.6); max-width: 480px; margin: 0 auto; line-height: 1.7; }
+  .uptime-banner { background: var(--mid); border-top: 1px solid rgba(61,214,200,0.2); border-bottom: 1px solid rgba(61,214,200,0.2); padding: 0.85rem 2rem; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 1.75rem; font-size: 16px; color: rgba(255,255,255,0.6); width: 100%; }
+  .uptime-banner strong { color: var(--teal); }
+  .banner-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.2); }
+  .container { max-width: 1300px; width: 100%; margin: 0 auto; padding: 2rem 2rem; }
+  .legend { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.75rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); align-items: center; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+  .li { width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #fff; font-weight: 700; flex-shrink: 0; }
+  .li-green { background: #00a878; }
+  .li-yellow { background: #f2c744; }
+  .li-orange { background: #e8912d; }
+  .li-red { background: #e01e5a; }
+  .li-gray { background: #cbd5e0; }
+  .app-block { margin-bottom: 2.25rem; margin-top: 0.5rem; }
+  .app-block-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; padding: 0 0.25rem; }
+  .app-block-title { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; display: flex; align-items: center; gap: 8px; }
+  .title-accent { display: inline-block; width: 3px; height: 16px; border-radius: 2px; background: var(--grad); }
+  .app-block-link { font-size: 13px; color: var(--muted); text-decoration: none; opacity: 0.8; }
+  .app-block-link:hover { opacity: 1; }
+  .feature-table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 12px; overflow: visible; border: 1px solid var(--border); margin-top: 4px; transition: background 0.2s; }
+  .feature-table tr { border-bottom: 1px solid var(--row-sep); }
+  .feature-table tr:last-child { border-bottom: none; }
+  .feature-table td { padding: 1rem 1.25rem; vertical-align: middle; }
+  .feature-name { font-size: 16px; font-weight: 500; width: 28%; color: var(--text); }
+  .feature-status-cell { width: 18%; }
+  .feature-status { display: flex; align-items: center; gap: 9px; font-size: 15px; color: var(--muted); }
+  .sc { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .sc-green { background: #00a878; }
+  .sc-yellow { background: #f2c744; }
+  .sc-orange { background: #e8912d; }
+  .sc-red { background: #e01e5a; }
+  .check { color: #fff; font-size: 13px; font-weight: 700; }
+  .feature-uptime { font-size: 14px; color: var(--muted); width: 10%; text-align: right; font-weight: 600; }
+  .uptime-col { width: 34%; padding-right: 1.25rem; }
+  .mini-bar { display: flex; gap: 2px; height: 26px; }
+  .mini-day { flex: 1; border-radius: 2px; cursor: pointer; position: relative; }
+  .mini-day:hover .tip { display: block; }
+  .tip { display: none; position: absolute; bottom: -32px; left: 50%; transform: translateX(-50%); background: var(--dark); color: #fff; font-size: 11px; padding: 4px 8px; border-radius: 4px; white-space: nowrap; z-index: 1; }
+  .region-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 3px; margin-left: 5px; background: rgba(61,214,200,0.12); color: var(--teal); vertical-align: middle; letter-spacing: 0.03em; }
+  .ext-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 3px; margin-left: 5px; background: #fef3c7; color: #92400e; vertical-align: middle; }
+  .divider { border: none; border-top: 1px dashed var(--border); margin: 1.75rem 0; }
+  .incidents-section { margin-top: 1.75rem; }
+  .incidents-title { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.9rem; display: flex; align-items: center; gap: 8px; }
+  .incident-row { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; transition: background 0.2s; }
+  .incident-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .incident-name { font-size: 16px; font-weight: 600; color: var(--text); margin-top: 4px; }
+  .incident-date { font-size: 13px; color: var(--muted); white-space: nowrap; margin-left: 12px; }
+  .incident-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .i-tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; margin-right: 6px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .it-resolved { background: #dcfce7; color: #15803d; }
+  .it-active { background: #fee2e2; color: #b91c1c; }
+  .it-ext { background: #fef3c7; color: #92400e; }
+  .no-incident { font-size: 13px; color: var(--muted); text-align: center; padding: 1.25rem; background: var(--card); border: 1px solid var(--border); border-radius: 10px; }
+  /* ── Calendar ── */
+  .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .cal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 1.25rem; }
+  @media (max-width: 860px) { .cal-grid { grid-template-columns: 1fr; } }
+  .cal-month { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; transition: background 0.2s; }
+  .cal-month-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 0.75rem; text-align: center; letter-spacing: 0.02em; }
+  .cal-dow { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 4px; }
+  .cal-dow span { font-size: 10px; text-align: center; color: var(--muted); font-weight: 600; padding: 2px 0; }
+  .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .cal-day { border-radius: 4px; cursor: default; position: relative; aspect-ratio: 1; min-height: 20px; }
+  .cal-day:hover .cal-tip { display: block; }
+  .cal-tip { display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #1a2d3d; color: #fff; font-size: 11px; padding: 7px 11px; border-radius: 7px; white-space: nowrap; z-index: 20; pointer-events: none; line-height: 1.7; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+  .cal-tip::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#1a2d3d; }
+  .cal-empty { aspect-ratio: 1; min-height: 20px; }
+  .cal-legend { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: 2rem; font-size: 12px; color: var(--muted); }
+  .cal-swatch { display: inline-block; width: 13px; height: 13px; border-radius: 3px; vertical-align: middle; margin-right: 4px; }
+  footer { background: var(--dark); border-top: 1px solid rgba(255,255,255,0.06); padding: 1.25rem 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-top: 2rem; width: 100%; }
+  .footer-left { font-size: 12px; color: rgba(255,255,255,0.4); }
+  .footer-right { font-size: 12px; color: rgba(255,255,255,0.3); }
+  .drill-toggle { background: none; border: none; cursor: pointer; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 4px; padding: 0; margin-top: 6px; }
+  .drill-arrow { display: inline-block; transition: transform 0.2s; }
+  .drill-arrow.open { transform: rotate(90deg); }
+  .drill-details { display: none; margin-top: 4px; }
+  .drill-details.open { display: block; }
+  .admin-trigger { cursor: pointer; opacity: 0.2; transition: opacity 0.2s; font-size: 14px; }
+  .admin-trigger:hover { opacity: 0.6; }
+  .admin-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; }
+  .admin-overlay.open { display: block; }
+  .admin-panel { position: fixed; top: 0; right: -500px; width: 480px; height: 100vh; background: #fff; z-index: 101; box-shadow: -4px 0 24px rgba(0,0,0,0.15); transition: right 0.3s ease; overflow-y: auto; }
+  .admin-panel.open { right: 0; }
+  .admin-header { background: var(--dark); padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+  .admin-header h2 { color: #fff; font-size: 16px; font-weight: 700; }
+  .admin-close { background: none; border: none; color: rgba(255,255,255,0.6); font-size: 20px; cursor: pointer; }
+  .admin-body { padding: 1.5rem; }
+  .admin-section { margin-bottom: 1.5rem; }
+  .admin-section h3 { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+  .admin-form { display: flex; flex-direction: column; gap: 10px; }
+  .admin-form select, .admin-form textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; font-family: inherit; outline: none; color: var(--text); }
+  .admin-form textarea { resize: vertical; min-height: 80px; }
+  .admin-submit { background: var(--grad); color: var(--dark); border: none; border-radius: 6px; padding: 9px 20px; font-size: 14px; font-weight: 700; cursor: pointer; align-self: flex-start; }
+  .admin-incident-list { display: flex; flex-direction: column; gap: 8px; }
+  .admin-incident-item { background: #f7fafc; border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; }
+  .admin-incident-item .aii-top { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .admin-incident-item .aii-service { font-size: 12px; font-weight: 700; color: var(--text); }
+  .admin-incident-item .aii-desc { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .admin-incident-item .aii-actions { display: flex; gap: 6px; }
+  .aii-btn { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; border: none; cursor: pointer; }
+  .aii-btn-resolve { background: #dcfce7; color: #15803d; }
+  .aii-btn-delete { background: #fee2e2; color: #b91c1c; }
+  .admin-user { font-size: 12px; color: rgba(255,255,255,0.6); }
+  .severity-minor { background: #fef3c7; color: #92400e; }
+  .severity-major { background: #fee2e2; color: #b91c1c; }
+  .severity-outage { background: #fecaca; color: #7f1d1d; }
+  @media(max-width:640px) {
+    html { font-size: 100%; }
+
+    header { height: auto; padding: 0.75rem 1rem; flex-wrap: wrap; gap: 8px; }
+    .logo-wrap img:first-child { height: 36px !important; }
+    .logo-wrap img:last-child  { height: 32px !important; }
+    .logo-wrap > div { height: 28px !important; margin: 0 8px !important; }
+    header > div:last-child { gap: 6px; }
+    header > div:last-child a { font-size: 11px !important; padding: 6px 10px !important; }
+
+    .container { padding: 0.75rem 0.75rem; }
+    .uptime-banner { gap: 0.6rem; font-size: 12px; padding: 0.6rem 0.75rem; }
+    .banner-dot { display: none; }
+    .hero { padding: 1.75rem 0.75rem 2rem; }
+    .hero h1 { font-size: 18px; }
+    .hero p { font-size: 12px; }
+    .hero-icon { width: 56px; height: 56px; margin-bottom: 0.9rem; }
+    .legend { gap: 0.75rem; margin-bottom: 1.25rem; }
+
+    .feature-table,
+    .feature-table tbody,
+    .feature-table tr { display: block; }
+    .feature-table tr {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 0.65rem 0.875rem;
+      gap: 0;
+    }
+    .feature-table td { display: block; padding: 0; border: none; }
+    .feature-name { width: 55%; font-size: 14px; padding-right: 0.5rem; }
+    .feature-status-cell { width: 45%; }
+    .feature-status { font-size: 13px; }
+    .sc { width: 22px; height: 22px; }
+    .feature-uptime { display: none; }
+    .uptime-col { width: 100%; padding: 0.4rem 0 0; }
+    .mini-bar { height: 18px; }
+    .tip { bottom: auto; top: -30px; font-size: 10px; }
+
+    .incident-top { flex-direction: column; gap: 4px; }
+    .incident-date { margin-left: 0; white-space: normal; }
+    .incident-name { font-size: 14px; }
+
+    .admin-panel { width: 100%; right: -100%; }
+    .app-block-header { flex-wrap: wrap; gap: 4px; }
+    .app-block-link { font-size: 11px; }
+    footer { padding: 1rem; flex-direction: column; align-items: flex-start; }
+  }
+</style>
+<script>(function(){var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+</head>
+<body>
+
+<header>
+  <div class="logo-wrap">
+    <img src="{{ url_for('static', filename='cotulla-logo.png') }}" alt="Cotulla Education" style="height: 72px; width: auto;" />
+    <img src="{{ url_for('static', filename='quad_white.png') }}" alt="Our Schools" style="height: 64px; width: auto; opacity: 0.85;" />
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode" style="background:rgba(61,214,200,0.12);border:1px solid rgba(61,214,200,0.3);color:var(--teal);font-size:18px;width:40px;height:40px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">🌙</button>
+    <a href="/" style="background: rgba(61,214,200,0.12); border: 1px solid rgba(61,214,200,0.3); color: var(--teal); text-decoration: none; font-size: 13px; font-weight: 700; padding: 8px 18px; border-radius: 6px; letter-spacing: 0.03em;">← Live Status</a>
+  </div>
+</header>
+
+<div class="school-bar">
+  <span style="font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6); letter-spacing: 0.05em; text-transform: uppercase;">Historical Uptime — All Time</span>
+</div>
+
+<div class="hero">
+  <div class="hero-icon">
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+      <path d="M12 21l6 6 10-12" stroke="url(#hg)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <defs><linearGradient id="hg" x1="12" y1="15" x2="28" y2="27" gradientUnits="userSpaceOnUse"><stop stop-color="#3dd6c8"/><stop offset="1" stop-color="#5ee8a0"/></linearGradient></defs>
+    </svg>
+  </div>
+  <h1 id="heroTitle">All Systems Operational</h1>
+  <p>Historical uptime data for all Cotulla Education services — 90-day rolling window across Optimus, iMAP, Anthology Americas, and third-party integrations.</p>
+</div>
+
+<div class="uptime-banner">
+  <span>Optimus (90d): <strong id="banner-optimus">—</strong></span>
+  <div class="banner-dot"></div>
+  <span>iMAP (90d): <strong id="banner-imap">—</strong></span>
+  <div class="banner-dot"></div>
+  <span>Anthology Americas: <strong>99.88%</strong></span>
+  <div class="banner-dot"></div>
+  <span>Last updated: <strong id="last-updated"></strong></span>
+</div>
+
+<div class="container">
+
+  <div class="legend">
+    <div class="legend-item"><div class="li li-green">✓</div>Operational</div>
+    <div class="legend-item"><div class="li li-yellow">!</div>Degraded</div>
+    <div class="legend-item"><div class="li li-orange">!</div>Partial Outage</div>
+    <div class="legend-item"><div class="li li-red">✕</div>Major Outage</div>
+    <div class="legend-item"><div class="li li-gray">–</div>No Data</div>
+    <div style="margin-left:auto;font-size:11px;color:var(--muted);">Uptime % = last 90 days · bars = daily</div>
+  </div>
+
+  <!-- DAILY UPTIME CALENDAR -->
+  <div class="cal-header">
+    <div class="app-block-title"><div class="title-accent"></div>📅 Daily Uptime — Internal Systems</div>
+    <span style="font-size:12px;color:var(--muted);">Optimus &amp; iMAP · last 90 days</span>
+  </div>
+  <div id="uptime-calendar" class="cal-grid">
+    <div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;padding:2rem;">Loading calendar...</div>
+  </div>
+  <div class="cal-legend">
+    <span style="font-weight:600;">Daily composite uptime:</span>
+    <span><span class="cal-swatch" style="background:#00a878;"></span>≥ 99%</span>
+    <span><span class="cal-swatch" style="background:#f2c744;"></span>95 – 99%</span>
+    <span><span class="cal-swatch" style="background:#e8912d;"></span>90 – 95%</span>
+    <span><span class="cal-swatch" style="background:#e01e5a;"></span>&lt; 90%</span>
+    <span><span class="cal-swatch" style="background:#e2e8f0;"></span>No data</span>
+  </div>
+  <hr class="divider" style="margin-top:0;">
+
+  <!-- OPTIMUS -->
+  <div class="app-block">
+    <div class="app-block-header">
+      <div class="app-block-title"><div class="title-accent"></div><img src="{{ url_for('static', filename='Optimus.png') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;border-radius:3px;"> Optimus — Student Portal</div>
+      <a href="https://optimus-cotulla.azurewebsites.net" class="app-block-link" target="_blank">optimus-cotulla.azurewebsites.net ↗</a>
+    </div>
+    <table class="feature-table">
+      <tr id="row-opt-web">
+        <td class="feature-name">Optimus</td>
+        <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+        <td class="feature-uptime">—</td>
+        <td class="uptime-col"><div class="mini-bar" id="b-opt-web"></div></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- iMAP -->
+  <div class="app-block">
+    <div class="app-block-header">
+      <div class="app-block-title"><div class="title-accent"></div>🔗 iMAP — Identity Management & Provisioning Platform</div>
+      <a href="https://imap-app-1748879902.azurewebsites.net" class="app-block-link" target="_blank">imap-app-1748879902.azurewebsites.net ↗</a>
+    </div>
+    <table class="feature-table">
+      <tr id="row-imap-web">
+        <td class="feature-name">iMAP<div><button class="drill-toggle" onclick="toggleDrill('imap-drill')"><span class="drill-arrow" id="imap-drill-arrow">▸</span> View details</button></div></td>
+        <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+        <td class="feature-uptime">—</td>
+        <td class="uptime-col"><div class="mini-bar" id="b-imap-web"></div></td>
+      </tr>
+    </table>
+    <div class="drill-details" id="imap-drill">
+      <table class="feature-table" style="margin-top:4px;">
+        <tr id="row-imap-web-health">
+          <td class="feature-name" style="padding-left:1.5rem;">Web UI Health<br><a href="https://imap-app-1748879902.azurewebsites.net/health/status" target="_blank" style="font-size:11px;color:var(--teal);text-decoration:none;">/health/status ↗</a></td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-imap-web-health"></div></td>
+        </tr>
+        <tr id="row-imap-api-health">
+          <td class="feature-name" style="padding-left:1.5rem;">API Health<br><a href="https://imap-app-1748879902.azurewebsites.net/api/health/status" target="_blank" style="font-size:11px;color:var(--teal);text-decoration:none;">/api/health/status ↗</a></td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-imap-api-health"></div></td>
+        </tr>
+        <tr id="row-imap-blob">
+          <td class="feature-name" style="padding-left:1.5rem;">Blob Storage</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-imap-blob"></div></td>
+        </tr>
+        <tr id="row-imap-entra">
+          <td class="feature-name" style="padding-left:1.5rem;">Entra ID</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-imap-entra"></div></td>
+        </tr>
+        <tr id="row-imap-jira-conn">
+          <td class="feature-name" style="padding-left:1.5rem;">Jira Connection</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-imap-jira-conn"></div></td>
+        </tr>
+        <tr id="row-imap-snowflake">
+          <td class="feature-name" style="padding-left:1.5rem;">Snowflake</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-imap-snowflake"></div></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- CUSTOMER-FACING SITES -->
+  <div class="app-block">
+    <div class="app-block-header">
+      <div class="app-block-title"><div class="title-accent"></div>🌐 Student-Facing Sites</div>
+    </div>
+    <!-- Aviation Maintenance (with content-check drill-down) -->
+    <table class="feature-table">
+      <tr id="row-school-aviation">
+        <td class="feature-name">
+          <img src="{{ url_for('static', filename='AIM-logo.jpeg') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;border-radius:3px;object-fit:contain;">Aviation Maintenance<br><a href="https://aviationmaintenance.edu/" target="_blank" style="font-size:11px;color:var(--teal);text-decoration:none;">aviationmaintenance.edu ↗</a>
+          <div><button class="drill-toggle" onclick="toggleDrill('aim-drill')"><span class="drill-arrow" id="aim-drill-arrow">▸</span> View pages</button></div>
+        </td>
+        <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+        <td class="feature-uptime">—</td>
+        <td class="uptime-col"><div class="mini-bar" id="b-school-aviation"></div></td>
+      </tr>
+    </table>
+    <div class="drill-details" id="aim-drill">
+      <table class="feature-table" style="margin-top:4px;">
+        <tr id="row-aim-admissions">
+          <td class="feature-name" style="padding-left:1.5rem;">Get Started <span class="region-tag">Priority</span><br><a href="https://aviationmaintenance.edu/admissions/" target="_blank" style="font-size:11px;color:var(--teal);text-decoration:none;">/admissions/ ↗</a></td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-aim-admissions"></div></td>
+        </tr>
+        <tr id="row-aim-campuses">
+          <td class="feature-name" style="padding-left:1.5rem;">Campuses<br><a href="https://aviationmaintenance.edu/campuses/" target="_blank" style="font-size:11px;color:var(--teal);text-decoration:none;">/campuses/ ↗</a></td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-aim-campuses"></div></td>
+        </tr>
+        <tr id="row-aim-programs">
+          <td class="feature-name" style="padding-left:1.5rem;">Programs<br><a href="https://aviationmaintenance.edu/programs/aviation/" target="_blank" style="font-size:11px;color:var(--teal);text-decoration:none;">/programs/aviation/ ↗</a></td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-aim-programs"></div></td>
+        </tr>
+        <tr id="row-aim-resources">
+          <td class="feature-name" style="padding-left:1.5rem;">Student Resources<br><a href="https://aviationmaintenance.edu/your-rights-old/student-resources/" target="_blank" style="font-size:11px;color:var(--teal);text-decoration:none;">/student-resources/ ↗</a></td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-aim-resources"></div></td>
+        </tr>
+        <tr id="row-aim-about">
+          <td class="feature-name" style="padding-left:1.5rem;">About AIM<br><a href="https://aviationmaintenance.edu/about/" target="_blank" style="font-size:11px;color:var(--teal);text-decoration:none;">/about/ ↗</a></td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-aim-about"></div></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Centura + Tidewater -->
+    <table class="feature-table" style="margin-top:8px;">
+      <tr id="row-school-centura">
+        <td class="feature-name"><img src="{{ url_for('static', filename='centura-logo.png') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;border-radius:3px;object-fit:contain;">Centura College<br><a href="https://www.centuracollege.edu/" target="_blank" style="font-size:11px;color:var(--teal);text-decoration:none;">centuracollege.edu ↗</a></td>
+        <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+        <td class="feature-uptime">—</td>
+        <td class="uptime-col"><div class="mini-bar" id="b-school-centura"></div></td>
+      </tr>
+      <tr id="row-school-tidewater">
+        <td class="feature-name"><img src="{{ url_for('static', filename='TT-logo.png') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;border-radius:3px;object-fit:contain;">Tidewater Tech Trades<br><a href="https://tidewatertechtrades.edu/" target="_blank" style="font-size:11px;color:var(--teal);text-decoration:none;">tidewatertechtrades.edu ↗</a></td>
+        <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+        <td class="feature-uptime">—</td>
+        <td class="uptime-col"><div class="mini-bar" id="b-school-tidewater"></div></td>
+      </tr>
+    </table>
+  </div>
+
+  <hr class="divider">
+
+  <!-- THIRD PARTY -->
+  <div class="app-block">
+    <div class="app-block-header">
+      <div class="app-block-title"><div class="title-accent"></div>🔌 Third-Party Services <span class="ext-tag">External</span></div>
+    </div>
+
+    <!-- Anthology -->
+    <table class="feature-table">
+      <tr>
+        <td class="feature-name">
+          <img src="{{ url_for('static', filename='ellucian.jpg') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;border-radius:3px;">Anthology Student
+          <div><button class="drill-toggle" onclick="toggleDrill('anth-drill')"><span class="drill-arrow" id="anth-drill-arrow">▸</span> View details</button></div>
+        </td>
+        <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Operational</div></td>
+        <td class="feature-uptime">99.42%</td>
+        <td class="uptime-col"><div class="mini-bar" id="b-anth-student"></div></td>
+      </tr>
+    </table>
+    <div class="drill-details" id="anth-drill">
+      <table class="feature-table" style="margin-top:4px;">
+        <tr>
+          <td class="feature-name" style="padding-left:1.5rem;">Anthology Reach<br><span class="region-tag">US East</span><span class="region-tag">US West</span><span class="region-tag">US Central</span></td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Operational</div></td>
+          <td class="feature-uptime">100%</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-anth-reach"></div></td>
+        </tr>
+        <tr>
+          <td class="feature-name" style="padding-left:1.5rem;">Anthology Occupation Insight<br><span class="region-tag">US East</span><span class="region-tag">US West</span><span class="region-tag">US Central</span></td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Operational</div></td>
+          <td class="feature-uptime">100%</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-anth-occ"></div></td>
+        </tr>
+        <tr>
+          <td class="feature-name" style="padding-left:1.5rem;">Anthology Raise<br><span class="region-tag">US East</span><span class="region-tag">US West</span><span class="region-tag">US Central</span></td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Operational</div></td>
+          <td class="feature-uptime">100%</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-anth-raise"></div></td>
+        </tr>
+        <tr>
+          <td class="feature-name" style="padding-left:1.5rem;">CampusNexus CRM<br><span class="region-tag">US East</span><span class="region-tag">US West</span><span class="region-tag">US Central</span></td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Operational</div></td>
+          <td class="feature-uptime">100%</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-anth-crm"></div></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- LeadSquared -->
+    <table class="feature-table" style="margin-top:8px;">
+      <tr id="row-leadsquared">
+        <td class="feature-name">
+          <img src="{{ url_for('static', filename='leadsquared.png') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;border-radius:3px;">LeadSquared
+          <div><button class="drill-toggle" onclick="toggleDrill('ls-drill')"><span class="drill-arrow" id="ls-drill-arrow">▸</span> View sync details</button></div>
+        </td>
+        <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+        <td class="feature-uptime">—</td>
+        <td class="uptime-col"><div class="mini-bar" id="b-leadsquared"></div></td>
+      </tr>
+    </table>
+    <div class="drill-details" id="ls-drill">
+      <div id="ls-detail" style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;margin-top:4px;font-size:13px;color:var(--muted);">
+        Loading sync details...
+      </div>
+    </div>
+
+    <!-- Slack + Jira (no drill-downs) -->
+    <table class="feature-table" style="margin-top:8px;">
+      <tr id="row-slack">
+        <td class="feature-name"><img src="https://a.slack-edge.com/80588/marketing/img/icons/icon_slack_hash_colored.png" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;">Slack</td>
+        <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+        <td class="feature-uptime">—</td>
+        <td class="uptime-col"><div class="mini-bar" id="b-slack"></div></td>
+      </tr>
+      <tr id="row-jira">
+        <td class="feature-name"><img src="{{ url_for('static', filename='jira.webp') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;border-radius:3px;">Jira Service Management</td>
+        <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+        <td class="feature-uptime">—</td>
+        <td class="uptime-col"><div class="mini-bar" id="b-jira"></div></td>
+      </tr>
+    </table>
+
+    <!-- Greenhouse -->
+    <table class="feature-table" style="margin-top:8px;">
+      <tr id="row-greenhouse-website">
+        <td class="feature-name">
+          <img src="{{ url_for('static', filename='greenhouse.png') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;border-radius:3px;">Greenhouse
+          <div><button class="drill-toggle" onclick="toggleDrill('greenhouse-drill')"><span class="drill-arrow" id="greenhouse-drill-arrow">▸</span> View details</button></div>
+        </td>
+        <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+        <td class="feature-uptime">—</td>
+        <td class="uptime-col"><div class="mini-bar" id="b-greenhouse-website"></div></td>
+      </tr>
+    </table>
+    <div class="drill-details" id="greenhouse-drill">
+      <table class="feature-table" style="margin-top:4px;">
+        <tr id="row-greenhouse-recruiting">
+          <td class="feature-name" style="padding-left:1.5rem;">Greenhouse Recruiting</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-greenhouse-recruiting"></div></td>
+        </tr>
+        <tr id="row-greenhouse-harvest">
+          <td class="feature-name" style="padding-left:1.5rem;">Harvest API</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-greenhouse-harvest"></div></td>
+        </tr>
+        <tr id="row-greenhouse-jobboards">
+          <td class="feature-name" style="padding-left:1.5rem;">Job Boards</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-greenhouse-jobboards"></div></td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="margin-top:8px;font-size:11px;color:var(--muted);padding:0 0.25rem;">
+      Status sourced from:
+      <a href="https://status.anthology.com" target="_blank" style="color:var(--teal);text-decoration:none;">status.anthology.com ↗</a>
+      &nbsp;·&nbsp;
+      <a href="https://slack-status.com" target="_blank" style="color:var(--teal);text-decoration:none;">slack-status.com ↗</a>
+      &nbsp;·&nbsp;
+      <a href="https://jira-software.status.atlassian.com" target="_blank" style="color:var(--teal);text-decoration:none;">Jira Status ↗</a>
+      &nbsp;·&nbsp;
+      <a href="https://status.greenhouse.io" target="_blank" style="color:var(--teal);text-decoration:none;">Greenhouse Status ↗</a>
+    </div>
+  </div>
+
+  <!-- Incidents -->
+  <div class="incidents-section">
+    <div class="incidents-title"><div class="title-accent"></div>Recent Incidents</div>
+    <div id="incident-list">Loading...</div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-left">© 2026 Cotulla Education &nbsp;·&nbsp; Powered by Azure Application Insights &nbsp;·&nbsp; Anthology data from status.anthology.com</div>
+  <div class="footer-right">
+    All times local &nbsp;·&nbsp;
+    <span class="admin-trigger" onclick="openAdmin()" title="Admin">🔒</span>
+  </div>
+</footer>
+
+<div class="admin-overlay" id="adminOverlay" onclick="closeAdmin()"></div>
+<div class="admin-panel" id="adminPanel">
+  <div class="admin-header">
+    <h2>⚙️ Admin Panel</h2>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="admin-user" id="adminUser"></div>
+      <button class="admin-close" onclick="closeAdmin()">✕</button>
+    </div>
+  </div>
+  <div class="admin-body">
+    <div id="adminLoginState">
+      <p style="font-size:14px;color:var(--muted);margin-bottom:1rem;">Sign in with your Microsoft account to manage incidents.</p>
+      <a href="/admin/login" style="background:var(--grad);color:var(--dark);border:none;border-radius:6px;padding:10px 20px;font-size:14px;font-weight:700;text-decoration:none;display:inline-block;">Sign in with Microsoft</a>
+    </div>
+    <div id="adminLoggedInState" style="display:none;">
+      <div class="admin-section">
+        <h3>Log New Incident</h3>
+        <div class="admin-form">
+          <select id="incidentService">
+            <option value="">Select affected service...</option>
+            <option value="Optimus">Optimus — Student Portal</option>
+            <option value="iMAP">iMAP — Identity Management</option>
+            <option value="Anthology">Anthology Americas</option>
+            <option value="Slack">Slack</option>
+          </select>
+          <select id="incidentSeverity">
+            <option value="">Select severity...</option>
+            <option value="minor">Minor — Degraded performance</option>
+            <option value="major">Major — Partial outage</option>
+            <option value="outage">Outage — Service down</option>
+          </select>
+          <textarea id="incidentDesc" placeholder="Describe the incident..."></textarea>
+          <button class="admin-submit" onclick="createIncident()">Log Incident</button>
+        </div>
+      </div>
+      <div class="admin-section">
+        <h3>Active Incidents</h3>
+        <div class="admin-incident-list" id="adminIncidentList">
+          <p style="font-size:13px;color:var(--muted);">Loading...</p>
+        </div>
+      </div>
+      <a href="/admin/logout" style="font-size:12px;color:var(--muted);">Sign out</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  const now = new Date();
+  document.getElementById('last-updated').textContent =
+    now.toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+
+  function buildBar(id, isNew, hasIncident, dailyData) {
+    const c = document.getElementById(id);
+    if (!c) return;
+    c.innerHTML = '';
+    for (let i = 0; i < 90; i++) {
+      const d = document.createElement('div');
+      d.className = 'mini-day';
+      const dt = new Date();
+      dt.setDate(dt.getDate() - (89 - i));
+      const ds = dt.toISOString().split('T')[0];
+      const displayDate = (dt.getMonth()+1)+'/'+dt.getDate()+'/'+dt.getFullYear();
+      let color, label;
+      if (isNew && i < 89) {
+        color = '#e2e8f0'; label = 'No data';
+      } else if (dailyData && dailyData[ds] !== undefined) {
+        const pct = dailyData[ds];
+        if (pct >= 99)      { color = '#00a878'; label = `Operational (${pct}%)`; }
+        else if (pct >= 90) { color = '#f2c744'; label = `Degraded (${pct}%)`; }
+        else if (pct >= 50) { color = '#e8912d'; label = `Partial Outage (${pct}%)`; }
+        else                { color = '#e01e5a'; label = `Major Outage (${pct}%)`; }
+      } else if (hasIncident && i === 79) {
+        color = '#e8912d'; label = 'Partial Outage';
+      } else {
+        color = '#00a878'; label = 'Operational';
+      }
+      d.style.background = color;
+      d.innerHTML = `<div class="tip">${displayDate} — ${label}</div>`;
+      c.appendChild(d);
+    }
+  }
+
+  // Build static bars first (imap-web updated after daily-uptime fetch)
+  buildBar('b-imap-web',         false, false, null);
+  buildBar('b-imap-web-health',  true, false, null);
+  buildBar('b-imap-api-health',  true, false, null);
+  buildBar('b-imap-blob',        true, false, null);
+  buildBar('b-imap-entra',       true, false, null);
+  buildBar('b-imap-jira-conn',   true, false, null);
+  buildBar('b-imap-snowflake',   true, false, null);
+  buildBar('b-anth-student', false, true, null);
+  buildBar('b-anth-reach', false, false, null);
+  buildBar('b-anth-occ', false, false, null);
+  buildBar('b-anth-raise', false, false, null);
+  buildBar('b-anth-crm', false, false, null);
+  buildBar('b-leadsquared', false, false, null);
+  buildBar('b-slack', false, false, null);
+  buildBar('b-jira',  false, false, null);
+  buildBar('b-greenhouse-website',    false, false, null);
+  buildBar('b-greenhouse-recruiting', false, false, null);
+  buildBar('b-greenhouse-harvest',    false, false, null);
+  buildBar('b-greenhouse-jobboards',  false, false, null);
+  buildBar('b-school-aviation',  true, false, null);
+  buildBar('b-school-centura',   true, false, null);
+  buildBar('b-school-tidewater', true, false, null);
+  buildBar('b-aim-admissions',   true, false, null);
+  buildBar('b-aim-campuses',     true, false, null);
+  buildBar('b-aim-programs',     true, false, null);
+  buildBar('b-aim-resources',    true, false, null);
+  buildBar('b-aim-about',        true, false, null);
+
+  // ── Calendar builder ──────────────────────────────────────────────────────
+  function buildCalendar(dailyData) {
+    const services = { 'Optimus': dailyData.optimus || {}, 'iMAP': dailyData.imap || {} };
+    const svcNames  = Object.keys(services);
+    const today     = new Date();
+    const cutoff    = new Date(today); cutoff.setDate(today.getDate() - 89);
+
+    function compositeForDay(dateStr) {
+      let min = null;
+      for (const n of svcNames) {
+        const pct = services[n][dateStr];
+        if (pct !== undefined && pct !== null) min = min === null ? pct : Math.min(min, pct);
+      }
+      return min;
+    }
+    function colorForPct(pct) {
+      if (pct === null) return '#e2e8f0';
+      if (pct >= 99)   return '#00a878';
+      if (pct >= 95)   return '#f2c744';
+      if (pct >= 90)   return '#e8912d';
+      return '#e01e5a';
+    }
+
+    const months = [];
+    for (let i = 2; i >= 0; i--) {
+      months.push(new Date(today.getFullYear(), today.getMonth() - i, 1));
+    }
+
+    const container = document.getElementById('uptime-calendar');
+    container.innerHTML = '';
+
+    months.forEach(monthStart => {
+      const yr  = monthStart.getFullYear();
+      const mo  = monthStart.getMonth();
+      const dim = new Date(yr, mo + 1, 0).getDate();
+      const title = monthStart.toLocaleString('default', { month: 'long', year: 'numeric' });
+      let startDow = monthStart.getDay();
+      startDow = startDow === 0 ? 6 : startDow - 1; // Mon=0 … Sun=6
+
+      const wrap = document.createElement('div');
+      wrap.className = 'cal-month';
+
+      let html  = `<div class="cal-month-title">${title}</div>`;
+      html += `<div class="cal-dow"><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span></div>`;
+      html += `<div class="cal-days">`;
+      for (let i = 0; i < startDow; i++) html += `<div class="cal-empty"></div>`;
+
+      for (let day = 1; day <= dim; day++) {
+        const d    = new Date(yr, mo, day);
+        const dStr = `${yr}-${String(mo+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        if (d > today || d < cutoff) { html += `<div class="cal-empty"></div>`; continue; }
+
+        const composite = compositeForDay(dStr);
+        const bg        = colorForPct(composite);
+        const label     = d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+        let tipHtml = `<strong>${label}</strong>`;
+        for (const n of svcNames) {
+          const pct = services[n][dStr];
+          tipHtml += `<br>${n}: ${pct !== undefined ? pct + '%' : '—'}`;
+        }
+        html += `<div class="cal-day" style="background:${bg};"><div class="cal-tip">${tipHtml}</div></div>`;
+      }
+
+      html += `</div>`;
+      wrap.innerHTML = html;
+      container.appendChild(wrap);
+    });
+  }
+
+  // Fetch daily uptime for Optimus bars + calendar
+  fetch('/api/daily-uptime')
+    .then(r => r.json())
+    .then(data => {
+      buildCalendar(data);
+      buildBar('b-opt-web',  false, false, data.optimus || {});
+      buildBar('b-imap-web', false, false, data.imap    || {});
+      buildBar('b-school-aviation',  false, false, data.school_aviation  || {});
+      buildBar('b-school-centura',   false, false, data.school_centura   || {});
+      buildBar('b-school-tidewater', false, false, data.school_tidewater || {});
+      buildBar('b-aim-admissions',   false, false, data.aim_admissions   || {});
+      buildBar('b-aim-campuses',     false, false, data.aim_campuses     || {});
+      buildBar('b-aim-programs',     false, false, data.aim_programs     || {});
+      buildBar('b-aim-resources',    false, false, data.aim_resources    || {});
+      buildBar('b-aim-about',        false, false, data.aim_about        || {});
+    })
+    .catch(() => {
+      document.getElementById('uptime-calendar').innerHTML =
+        '<div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;padding:2rem;">Calendar unavailable</div>';
+      buildBar('b-opt-web',  false, false, null);
+      buildBar('b-imap-web', false, false, null);
+      buildBar('b-school-aviation',  false, false, null);
+      buildBar('b-school-centura',   false, false, null);
+      buildBar('b-school-tidewater', false, false, null);
+      buildBar('b-aim-admissions',   false, false, null);
+      buildBar('b-aim-campuses',     false, false, null);
+      buildBar('b-aim-programs',     false, false, null);
+      buildBar('b-aim-resources',    false, false, null);
+      buildBar('b-aim-about',        false, false, null);
+    });
+
+  function toggleTheme() {
+    const html = document.documentElement;
+    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    document.getElementById('theme-toggle').textContent = next === 'dark' ? '☀️' : '🌙';
+  }
+  // Sync icon to current theme on load
+  (function() {
+    const btn = document.getElementById('theme-toggle');
+    if (btn) btn.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+  })();
+
+  function toggleDrill(id) {
+    const el = document.getElementById(id);
+    const arrow = document.getElementById(id + '-arrow');
+    el.classList.toggle('open');
+    if (arrow) arrow.classList.toggle('open');
+  }
+
+  function colorForStatus(s) {
+    if (s === 'operational') return '#00a878';
+    if (s === 'degraded')    return '#f2c744';
+    if (s === 'partial')     return '#e8912d';
+    if (s === 'outage')      return '#e01e5a';
+    return '#cbd5e0';
+  }
+
+  function updateIndicator(rowId, data) {
+    const row = document.getElementById(rowId);
+    if (!row) return;
+    const sc = row.querySelector('.sc');
+    if (sc) {
+      sc.style.background = colorForStatus(data.status);
+      sc.innerHTML = data.status === 'operational' ? '<span class="check">✓</span>' : '<span class="check">!</span>';
+    }
+    const statusDiv = row.querySelector('.feature-status');
+    if (statusDiv) {
+      const lastText = [...statusDiv.childNodes].filter(n => n.nodeType === 3).pop();
+      if (lastText) lastText.textContent = data.label || 'Unknown';
+    }
+    if (data.uptime !== null && data.uptime !== undefined) {
+      const uptimeEl = row.querySelector('.feature-uptime');
+      if (uptimeEl) uptimeEl.textContent = data.uptime + '%';
+    }
+  }
+
+  function loadStatus() {
+    fetch('/api/status')
+      .then(r => r.json())
+      .then(data => {
+        if (data.slack)          updateIndicator('row-slack', data.slack);
+        if (data.jira)           updateIndicator('row-jira', data.jira);
+        if (data.greenhouse_website)    updateIndicator('row-greenhouse-website',    data.greenhouse_website);
+        if (data.greenhouse_recruiting) updateIndicator('row-greenhouse-recruiting', data.greenhouse_recruiting);
+        if (data.greenhouse_harvest)    updateIndicator('row-greenhouse-harvest',    data.greenhouse_harvest);
+        if (data.greenhouse_jobboards)  updateIndicator('row-greenhouse-jobboards',  data.greenhouse_jobboards);
+        if (data.optimus)        updateIndicator('row-opt-web', data.optimus);
+        if (data.leadsquared) {
+          updateIndicator('row-leadsquared', data.leadsquared);
+          const ls = data.leadsquared;
+          const lastSync = ls.last_sync ? new Date(ls.last_sync).toLocaleString('en-US', {month:'numeric',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',hour12:true}) : 'Unknown';
+          const failedHtml = ls.tables_failed > 0 ? '<div style="color:#e01e5a;"><strong>' + ls.tables_failed + '</strong> failed</div>' : '';
+          const errorsHtml = ls.errors && ls.errors.length > 0 ? '<div style="color:#e01e5a;font-size:12px;">Errors: ' + ls.errors.join(', ') + '</div>' : '<div style="color:#00a878;">No sync errors</div>';
+          document.getElementById('ls-detail').innerHTML =
+            '<div style="display:flex;gap:2rem;flex-wrap:wrap;margin-bottom:0.75rem;">' +
+            '<div><strong>' + ls.tables_succeeded + '</strong> / ' + ls.tables_total + ' tables synced</div>' +
+            failedHtml +
+            '<div>Last sync: <strong>' + lastSync + '</strong></div>' +
+            '</div>' + errorsHtml;
+        }
+        if (data.imap)            updateIndicator('row-imap-web',        data.imap);
+        if (data.imap_web_health) updateIndicator('row-imap-web-health', data.imap_web_health);
+        if (data.imap_api_health) updateIndicator('row-imap-api-health', data.imap_api_health);
+        if (data.imap_blob)       updateIndicator('row-imap-blob',       data.imap_blob);
+        if (data.imap_entra)      updateIndicator('row-imap-entra',      data.imap_entra);
+        if (data.imap_jira_conn)  updateIndicator('row-imap-jira-conn',  data.imap_jira_conn);
+        if (data.imap_snowflake)  updateIndicator('row-imap-snowflake',  data.imap_snowflake);
+        if (data.school_aviation)  updateIndicator('row-school-aviation',  data.school_aviation);
+        if (data.school_centura)   updateIndicator('row-school-centura',   data.school_centura);
+        if (data.school_tidewater) updateIndicator('row-school-tidewater', data.school_tidewater);
+        if (data.aim_admissions)   updateIndicator('row-aim-admissions',   data.aim_admissions);
+        if (data.aim_campuses)     updateIndicator('row-aim-campuses',     data.aim_campuses);
+        if (data.aim_programs)     updateIndicator('row-aim-programs',     data.aim_programs);
+        if (data.aim_resources)    updateIndicator('row-aim-resources',    data.aim_resources);
+        if (data.aim_about)        updateIndicator('row-aim-about',        data.aim_about);
+        // Update banner (90-day uptime)
+        if (data.optimus && data.optimus.uptime != null) {
+          document.getElementById('banner-optimus').textContent = data.optimus.uptime + '%';
+        }
+        if (data.imap && data.imap.uptime != null) {
+          document.getElementById('banner-imap').textContent = data.imap.uptime + '%';
+        }
+        // Update hero
+        const svcs = [data.optimus, data.imap, data.school_aviation, data.school_centura, data.school_tidewater];
+        const hasOutage   = svcs.some(s => s && s.status === 'outage');
+        const hasDegraded = svcs.some(s => s && (s.status === 'degraded' || s.status === 'partial'));
+        const heroTitle = document.getElementById('heroTitle');
+        if (hasOutage) {
+          heroTitle.textContent = '🔴 Service Outage Detected';
+          heroTitle.style.color = '#e01e5a';
+        } else if (hasDegraded) {
+          heroTitle.textContent = '⚠️ Some Services Degraded';
+          heroTitle.style.color = '#f2c744';
+        } else {
+          heroTitle.textContent = 'All Systems Operational';
+          heroTitle.style.color = '#fff';
+        }
+      })
+      .catch(e => console.error('Status fetch error:', e));
+  }
+
+  loadStatus();
+
+  function loadIncidents() {
+    fetch('/api/incidents')
+      .then(r => r.json())
+      .then(data => {
+        const section = document.getElementById('incident-list');
+        if (!data.length) {
+          section.innerHTML = '<div class="no-incident">✓ No incidents reported for Optimus or iMAP — monitoring active since Mar 22, 2026</div>';
+          return;
+        }
+        section.innerHTML = data.map(i => `
+          <div class="incident-row">
+            <div class="incident-top">
+              <div>
+                <span class="i-tag ${i.status === 'active' ? 'it-active' : 'it-resolved'}">${i.status === 'active' ? 'Active' : 'Resolved'}</span>
+                <span class="i-tag it-ext">${i.service}</span>
+                <div class="incident-name">${i.description}</div>
+              </div>
+              <div class="incident-date">${i.started_at}</div>
+            </div>
+            ${i.resolved_at ? `<div class="incident-desc" style="margin-top:4px;">Resolved: ${i.resolved_at}</div>` : ''}
+          </div>
+        `).join('');
+      });
+  }
+
+  loadIncidents();
+
+  // Admin panel
+  const adminUser = {{ session.get('user') | tojson }};
+
+  function openAdmin() {
+    document.getElementById('adminOverlay').classList.add('open');
+    document.getElementById('adminPanel').classList.add('open');
+    if (adminUser) {
+      document.getElementById('adminLoginState').style.display = 'none';
+      document.getElementById('adminLoggedInState').style.display = 'block';
+      document.getElementById('adminUser').textContent = adminUser.name || adminUser.preferred_username || '';
+      loadAdminIncidents();
+    }
+  }
+
+  function closeAdmin() {
+    document.getElementById('adminOverlay').classList.remove('open');
+    document.getElementById('adminPanel').classList.remove('open');
+  }
+
+  function loadAdminIncidents() {
+    fetch('/api/incidents')
+      .then(r => r.json())
+      .then(data => {
+        const list = document.getElementById('adminIncidentList');
+        const active = data.filter(i => i.status === 'active');
+        if (!active.length) {
+          list.innerHTML = '<p style="font-size:13px;color:var(--muted);">No active incidents.</p>';
+          return;
+        }
+        list.innerHTML = active.map(i => `
+          <div class="admin-incident-item">
+            <div class="aii-top">
+              <div class="aii-service">${i.service} &nbsp;<span class="i-tag severity-${i.severity}">${i.severity}</span></div>
+              <div style="font-size:11px;color:var(--muted);">${i.started_at}</div>
+            </div>
+            <div class="aii-desc">${i.description}</div>
+            <div class="aii-actions">
+              <button class="aii-btn aii-btn-resolve" onclick="resolveIncident(${i.id})">✓ Resolve</button>
+              <button class="aii-btn aii-btn-delete" onclick="deleteIncident(${i.id})">Delete</button>
+            </div>
+          </div>
+        `).join('');
+      });
+  }
+
+  function createIncident() {
+    const service = document.getElementById('incidentService').value;
+    const severity = document.getElementById('incidentSeverity').value;
+    const description = document.getElementById('incidentDesc').value;
+    if (!service || !severity || !description) { alert('Please fill in all fields.'); return; }
+    fetch('/admin/incidents', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({service, severity, description})
+    }).then(r => r.json()).then(() => {
+      document.getElementById('incidentDesc').value = '';
+      document.getElementById('incidentService').value = '';
+      document.getElementById('incidentSeverity').value = '';
+      loadAdminIncidents();
+      loadIncidents();
+    });
+  }
+
+  function resolveIncident(id) {
+    fetch(`/admin/incidents/${id}/resolve`, {method: 'POST'})
+      .then(() => { loadAdminIncidents(); loadIncidents(); });
+  }
+
+  function deleteIncident(id) {
+    if (!confirm('Delete this incident?')) return;
+    fetch(`/admin/incidents/${id}`, {method: 'DELETE'})
+      .then(() => { loadAdminIncidents(); loadIncidents(); });
+  }
+</script>
+</body>
+</html>
