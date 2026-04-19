@@ -959,13 +959,17 @@ def check_and_alert(service, uptime_pct):
         db.session.add(state)
 
     currently_degraded = uptime_pct < ALERT_THRESHOLD
+    # Recovery uses recent ping status — fires as soon as service is back up,
+    # not when the 24h rolling average climbs back above the threshold.
+    currently_operational = get_latest_ping_status(service)["status"] == "operational"
+
     if currently_degraded and not state.in_alert:
         state.in_alert = True
         state.last_pct = uptime_pct
         state.alerted_at = datetime.now(timezone.utc)
         db.session.commit()
         send_alert(service, uptime_pct, recovered=False)
-    elif not currently_degraded and state.in_alert:
+    elif currently_operational and state.in_alert:
         state.in_alert = False
         state.last_pct = uptime_pct
         db.session.commit()
