@@ -1337,13 +1337,17 @@ def _build_hourly():
     ]
     db_hourly = get_hourly_uptime_batch(db_services)
 
-    with ThreadPoolExecutor(max_workers=5) as ex:
-        f_slk  = ex.submit(lambda: _cached("slack_h",    300, get_slack_hourly_uptime))
-        f_anth = ex.submit(lambda: _cached("anth_h",     300, lambda: get_statuspage_hourly_uptime("https://status.anthology.com/api/v2/incidents.json")))
-        f_ls   = ex.submit(lambda: _cached("ls_h",       300, lambda: get_statuspage_hourly_uptime("https://status.leadsquared.com/api/v2/incidents.json")))
-        f_jira = ex.submit(lambda: _cached("jira_h",     300, lambda: get_statuspage_hourly_uptime("https://jira-service-management.status.atlassian.com/api/v2/incidents.json")))
-        f_gh   = ex.submit(lambda: _cached("gh_h",       300, lambda: get_statuspage_hourly_uptime("https://status.greenhouse.io/api/v2/incidents.json")))
-    gh_hourly = f_gh.result()
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        f_slk    = ex.submit(lambda: _cached("slack_h",    300, get_slack_hourly_uptime))
+        f_anth   = ex.submit(lambda: _cached("anth_h",     300, lambda: get_statuspage_hourly_uptime("https://status.anthology.com/api/v2/incidents.json")))
+        f_ls     = ex.submit(lambda: _cached("ls_h",       300, lambda: get_statuspage_hourly_uptime("https://status.leadsquared.com/api/v2/incidents.json")))
+        f_jira   = ex.submit(lambda: _cached("jira_h",     300, lambda: get_statuspage_hourly_uptime("https://jira-service-management.status.atlassian.com/api/v2/incidents.json")))
+        f_gh     = ex.submit(lambda: _cached("gh_h",       300, lambda: get_statuspage_hourly_uptime("https://status.greenhouse.io/api/v2/incidents.json")))
+        f_sinch  = ex.submit(lambda: _cached("sinch_h",    300, lambda: get_statuspage_hourly_uptime("https://status.sinch.com/api/v2/incidents.json")))
+        f_canvas = ex.submit(lambda: _cached("canvas_h",   300, lambda: get_statuspage_hourly_uptime("https://status.instructure.com/api/v2/incidents.json")))
+    gh_hourly     = f_gh.result()
+    sinch_hourly  = f_sinch.result()
+    canvas_hourly = f_canvas.result()
     return {
         "optimus":               db_hourly["optimus"],
         "imap":                  db_hourly["imap"],
@@ -1361,6 +1365,15 @@ def _build_hourly():
         "greenhouse_recruiting": gh_hourly,
         "greenhouse_harvest":    gh_hourly,
         "greenhouse_jobboards":  gh_hourly,
+        "sinch":                 sinch_hourly,
+        "sinch_connectivity":    sinch_hourly,
+        "sinch_contactpro":      sinch_hourly,
+        "sinch_campaigns":       sinch_hourly,
+        "sinch_chatalayer":      sinch_hourly,
+        "canvas":                canvas_hourly,
+        "canvas_lms":            canvas_hourly,
+        "canvas_mobile":         canvas_hourly,
+        "canvas_studio":         canvas_hourly,
         "school_aviation":       db_hourly["school_aviation"],
         "school_centura":        db_hourly["school_centura"],
         "school_tidewater":      db_hourly["school_tidewater"],
@@ -1462,9 +1475,11 @@ def api_third_party_incidents():
         ("LeadSquared",            "https://status.leadsquared.com/api/v2/incidents.json"),
         ("Jira Service Management","https://jira-service-management.status.atlassian.com/api/v2/incidents.json"),
         ("Greenhouse",             "https://status.greenhouse.io/api/v2/incidents.json"),
+        ("Sinch",                  "https://status.sinch.com/api/v2/incidents.json"),
+        ("Instructure (Canvas)",   "https://status.instructure.com/api/v2/incidents.json"),
     ]
 
-    with ThreadPoolExecutor(max_workers=5) as ex:
+    with ThreadPoolExecutor(max_workers=8) as ex:
         f_slack = ex.submit(_fetch_slack_incidents, cutoff)
         sp_futures = [ex.submit(_fetch_statuspage_incidents, name, url, cutoff) for name, url in statuspage_sources]
 
