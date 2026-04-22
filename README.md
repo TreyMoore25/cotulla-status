@@ -1,7 +1,7 @@
 # Cotulla Education — System Status Page
 
 **Live site:** https://cotulla-uptime.azurewebsites.net  
-**Last updated:** April 16, 2026
+**Last updated:** April 21, 2026
 
 ---
 
@@ -33,11 +33,13 @@ Flask-based uptime and status monitoring dashboard for Cotulla Education interna
 - Tidewater Tech Trades (tidewatertechtrades.edu)
 
 ### Third-Party Services
-- Anthology Student (status.anthology.com)
-- LeadSquared (status.leadsquared.com)
+- Anthology Student (status.anthology.com) — with sub-components
+- Instructure / Canvas (status.instructure.com) — Canvas LMS, Canvas Mobile, Canvas Studio
+- Sinch (status.sinch.com) — External Connectivity, Contact Pro, Campaigns, Chatalayer
 - Slack (slack-status.com)
 - Jira Service Management (jira-service-management.status.atlassian.com)
-- Greenhouse (status.greenhouse.io)
+- Greenhouse (status.greenhouse.io) — with sub-components
+- LeadSquared (status.leadsquared.com)
 
 ---
 
@@ -120,8 +122,8 @@ cotulla-status/
 - Threshold configurable via `ALERT_THRESHOLD` env var (default: 95.0)
 
 ### Third-Party Status Alerts
-- **State change alerts:** Fires when Slack, Jira, or Greenhouse status changes to degraded/outage. Fires recovery on resolution.
-- **Incident feed alerts:** Fires when a new incident appears in any third-party status feed (Anthology, LeadSquared, Jira, Greenhouse, Slack). Uses `SeenIncident` DB table to deduplicate — prunes entries older than 7 days.
+- **State change alerts:** Fires when Slack, Jira, Greenhouse, Sinch, or Canvas status changes to degraded/outage (including sub-components). Fires recovery on resolution.
+- **Incident feed alerts:** Fires when a new incident appears in any third-party status feed (Anthology, LeadSquared, Jira, Greenhouse, Slack, Sinch, Instructure/Canvas). Uses `SeenIncident` DB table to deduplicate — prunes entries older than 7 days.
 
 ---
 
@@ -133,6 +135,27 @@ Features:
 - Log new incidents (service, severity, description)
 - Resolve or delete active incidents
 - View and clear backend error log
+
+---
+
+## Sprint Work — April 21, 2026
+
+### Status Page — UI Updates
+- Updated support ticket URL to specific service desk portal (`/portal/302`)
+- Removed duplicate "Need help?" ticket link from hero section
+- Renamed "Optimus — Student Portal" → "Optimus — Student Management"
+- Added service desk help links to Optimus, Student-Facing Sites, Anthology, Sinch, and Instructure (Canvas) rows
+- Added Sinch (with sub-services: External Connectivity, Contact Pro, Campaigns, Chatalayer) to Third-Party Services
+- Added Instructure (Canvas) (with sub-services: Canvas LMS, Canvas Mobile, Canvas Studio) to Third-Party Services
+- Added logos for Sinch and Canvas from static assets
+- Reordered Third-Party Services: Anthology → Canvas → Sinch → Slack → Jira → Greenhouse → LeadSquared
+
+### Alerting
+- Added `fetch_sinch_status()` — polls `status.sinch.com` components API, maps sub-services by name
+- Added `fetch_canvas_status()` — polls `status.instructure.com` components API, maps Canvas LMS/Mobile/Studio
+- Both wired into `run_third_party_alerts()` for real-time state-change Slack alerts
+- Added Sinch and Instructure to incident feed sources (`sp_sources`) for new incident alerts
+- Bumped `ThreadPoolExecutor` from 5 → 8 workers to handle additional concurrent status fetches
 
 ---
 

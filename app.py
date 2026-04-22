@@ -203,6 +203,15 @@ _TP_LABELS = {
     "tp_greenhouse_recruiting": "Greenhouse (Recruiting)",
     "tp_greenhouse_harvest":    "Greenhouse (Harvest API)",
     "tp_greenhouse_jobboards":  "Greenhouse (Job Boards)",
+    "tp_sinch":                 "Sinch",
+    "tp_sinch_connectivity":    "Sinch — External Connectivity",
+    "tp_sinch_contactpro":      "Sinch — Contact Pro",
+    "tp_sinch_campaigns":       "Sinch — Campaigns",
+    "tp_sinch_chatalayer":      "Sinch — Chatalayer",
+    "tp_canvas":                "Instructure (Canvas)",
+    "tp_canvas_lms":            "Canvas LMS",
+    "tp_canvas_mobile":         "Canvas Mobile",
+    "tp_canvas_studio":         "Canvas Studio",
 }
 
 
@@ -292,6 +301,16 @@ def run_third_party_alerts():
                 checks[f"tp_{sub}"] = status
         except Exception:
             pass
+        try:
+            for sub, status in fetch_sinch_status().items():
+                checks[f"tp_{sub}"] = status
+        except Exception:
+            pass
+        try:
+            for sub, status in fetch_canvas_status().items():
+                checks[f"tp_{sub}"] = status
+        except Exception:
+            pass
 
         for key, result in checks.items():
             is_down = result["status"] not in ("operational", "unknown")
@@ -323,9 +342,11 @@ def run_third_party_alerts():
             ("LeadSquared",             "https://status.leadsquared.com/api/v2/incidents.json"),
             ("Jira Service Management", "https://jira-service-management.status.atlassian.com/api/v2/incidents.json"),
             ("Greenhouse",              "https://status.greenhouse.io/api/v2/incidents.json"),
+            ("Sinch",                   "https://status.sinch.com/api/v2/incidents.json"),
+            ("Instructure (Canvas)",    "https://status.instructure.com/api/v2/incidents.json"),
         ]
         try:
-            with ThreadPoolExecutor(max_workers=5) as ex:
+            with ThreadPoolExecutor(max_workers=8) as ex:
                 f_slk = ex.submit(_fetch_slack_incidents, inc_cutoff)
                 sp_fts = [ex.submit(_fetch_statuspage_incidents, name, u, inc_cutoff) for name, u in sp_sources]
             inc_results = f_slk.result()
@@ -601,6 +622,83 @@ def fetch_greenhouse_status():
     except Exception as e:
         _log_error("greenhouse_status", e)
         return {k: {"status": "unknown", "label": "Unknown"} for k in COMPONENT_IDS}
+
+
+def fetch_sinch_status():
+    STATUS_MAP = {
+        "operational":          {"status": "operational", "label": "Operational"},
+        "degraded_performance": {"status": "degraded",    "label": "Degraded"},
+        "partial_outage":       {"status": "partial",     "label": "Partial Outage"},
+        "major_outage":         {"status": "outage",      "label": "Major Outage"},
+    }
+    component_names = {
+        "sinch_connectivity": "external connectivity",
+        "sinch_contactpro":   "contact pro",
+        "sinch_campaigns":    "campaigns",
+        "sinch_chatalayer":   "chatalayer",
+    }
+    try:
+        req = urllib.request.Request(
+            "https://status.sinch.com/api/v2/components.json",
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = json.loads(r.read())
+        components = data.get("components", [])
+        all_statuses = [c["status"] for c in components]
+        if any(s == "major_outage" for s in all_statuses):
+            overall = {"status": "outage", "label": "Major Outage"}
+        elif any(s in ("degraded_performance", "partial_outage") for s in all_statuses):
+            overall = {"status": "degraded", "label": "Degraded"}
+        else:
+            overall = {"status": "operational", "label": "Operational"}
+        result = {"sinch": overall}
+        for key, name in component_names.items():
+            matched = next((c for c in components if name in c["name"].lower()), None)
+            raw = matched["status"] if matched else "unknown"
+            result[key] = STATUS_MAP.get(raw, {"status": "unknown", "label": "Unknown"})
+        return result
+    except Exception as e:
+        _log_error("sinch_status", e)
+        return {k: {"status": "unknown", "label": "Unknown"} for k in ["sinch", "sinch_connectivity", "sinch_contactpro", "sinch_campaigns", "sinch_chatalayer"]}
+
+
+def fetch_canvas_status():
+    STATUS_MAP = {
+        "operational":          {"status": "operational", "label": "Operational"},
+        "degraded_performance": {"status": "degraded",    "label": "Degraded"},
+        "partial_outage":       {"status": "partial",     "label": "Partial Outage"},
+        "major_outage":         {"status": "outage",      "label": "Major Outage"},
+    }
+    component_names = {
+        "canvas_lms":    "canvas lms",
+        "canvas_mobile": "canvas mobile",
+        "canvas_studio": "canvas studio",
+    }
+    try:
+        req = urllib.request.Request(
+            "https://status.instructure.com/api/v2/components.json",
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = json.loads(r.read())
+        components = data.get("components", [])
+        all_statuses = [c["status"] for c in components]
+        if any(s == "major_outage" for s in all_statuses):
+            overall = {"status": "outage", "label": "Major Outage"}
+        elif any(s in ("degraded_performance", "partial_outage") for s in all_statuses):
+            overall = {"status": "degraded", "label": "Degraded"}
+        else:
+            overall = {"status": "operational", "label": "Operational"}
+        result = {"canvas": overall}
+        for key, name in component_names.items():
+            matched = next((c for c in components if name in c["name"].lower()), None)
+            raw = matched["status"] if matched else "unknown"
+            result[key] = STATUS_MAP.get(raw, {"status": "unknown", "label": "Unknown"})
+        return result
+    except Exception as e:
+        _log_error("canvas_status", e)
+        return {k: {"status": "unknown", "label": "Unknown"} for k in ["canvas", "canvas_lms", "canvas_mobile", "canvas_studio"]}
 
 
 def fetch_leadsquared_status():

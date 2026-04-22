@@ -206,7 +206,7 @@
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
     <button id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode" style="background:rgba(61,214,200,0.12);border:1px solid rgba(61,214,200,0.3);color:var(--teal);font-size:18px;width:40px;height:40px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">🌙</button>
-    <a href="https://cotulla.atlassian.net/servicedesk/customer/portals" target="_blank" style="background: var(--grad); color: var(--dark); text-decoration: none; font-size: 13px; font-weight: 700; padding: 8px 18px; border-radius: 6px; letter-spacing: 0.03em;">🎫 Submit a Ticket</a>
+    <a href="https://cotulla.atlassian.net/servicedesk/customer/portal/302" target="_blank" style="background: var(--grad); color: var(--dark); text-decoration: none; font-size: 13px; font-weight: 700; padding: 8px 18px; border-radius: 6px; letter-spacing: 0.03em;">🎫 Submit a Ticket</a>
     <a href="/history" style="background: rgba(61,214,200,0.12); border: 1px solid rgba(61,214,200,0.3); color: var(--teal); text-decoration: none; font-size: 13px; font-weight: 700; padding: 8px 18px; border-radius: 6px; letter-spacing: 0.03em;">Historical Data ↗</a>
   </div>
 </header>
@@ -224,7 +224,6 @@
   </div>
   <h1 id="heroTitle">All Systems Operational</h1>
   <p>All Cotulla Education services are running normally including Optimus, iMAP, Anthology Americas, and third-party integrations.</p>
-  <a href="https://cotulla.atlassian.net/servicedesk/customer/portals" target="_blank" style="display:inline-block;margin-top:1.5rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:9px 22px;border-radius:6px;letter-spacing:0.03em;">🎫 Need help? Submit a support ticket ↗</a>
 </div>
 
 <div class="uptime-banner">
@@ -251,8 +250,11 @@
   <!-- OPTIMUS -->
   <div class="app-block">
     <div class="app-block-header">
-      <div class="app-block-title"><div class="title-accent"></div><img src="{{ url_for('static', filename='Optimus.png') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;border-radius:3px;"> Optimus — Student Portal</div>
-      <a href="https://optimus-cotulla.azurewebsites.net" class="app-block-link" target="_blank">optimus-cotulla.azurewebsites.net ↗</a>
+      <div class="app-block-title"><div class="title-accent"></div><img src="{{ url_for('static', filename='Optimus.png') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;border-radius:3px;"> Optimus — Student Management</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <a href="https://cotulla.atlassian.net/servicedesk/customer/portal/434/group/1098/create/1539" target="_blank" style="font-size:12px;color:var(--teal);text-decoration:none;font-weight:600;">Having Trouble with Optimus? ↗</a>
+        <a href="https://optimus-cotulla.azurewebsites.net" class="app-block-link" target="_blank">optimus-cotulla.azurewebsites.net ↗</a>
+      </div>
     </div>
     <table class="feature-table">
       <tr id="row-opt-web">
@@ -326,6 +328,7 @@
   <div class="app-block">
     <div class="app-block-header">
       <div class="app-block-title"><div class="title-accent"></div>🌐 Student-Facing Sites</div>
+      <a href="https://cotulla.atlassian.net/servicedesk/customer/portal/269/group/468/create/612" target="_blank" style="font-size:12px;color:var(--teal);text-decoration:none;font-weight:600;">Website Issue? Submit a Ticket ↗</a>
     </div>
     <!-- Aviation Maintenance (with content-check drill-down) -->
     <table class="feature-table">
@@ -404,7 +407,10 @@
       <tr>
         <td class="feature-name">
           <img src="{{ url_for('static', filename='ellucian.jpg') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;border-radius:3px;">Anthology Student
-          <div><button class="drill-toggle" onclick="toggleDrill('anth-drill')"><span class="drill-arrow" id="anth-drill-arrow">▸</span> View details</button></div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button class="drill-toggle" onclick="toggleDrill('anth-drill')"><span class="drill-arrow" id="anth-drill-arrow">▸</span> View details</button>
+            <a href="https://cotulla.atlassian.net/servicedesk/customer/portal/302/group/633/create/908" target="_blank" style="font-size:12px;color:var(--teal);text-decoration:none;font-weight:600;">Report an Anthology Issue ↗</a>
+          </div>
         </td>
         <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Operational</div></td>
         <td class="feature-uptime">99.42%</td>
@@ -440,25 +446,89 @@
       </table>
     </div>
 
-    <!-- LeadSquared -->
+    <!-- Instructure (Canvas) -->
     <table class="feature-table" style="margin-top:8px;">
-      <tr id="row-leadsquared">
+      <tr id="row-instructure">
         <td class="feature-name">
-          <img src="{{ url_for('static', filename='leadsquared.png') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;border-radius:3px;">LeadSquared
-          <div><button class="drill-toggle" onclick="toggleDrill('ls-drill')"><span class="drill-arrow" id="ls-drill-arrow">▸</span> View sync details</button></div>
+          <img src="{{ url_for('static', filename='canvaslogo.png') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;border-radius:3px;">Instructure (Canvas)
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button class="drill-toggle" onclick="toggleDrill('instructure-drill')"><span class="drill-arrow" id="instructure-drill-arrow">▸</span> View details</button>
+            <a href="https://cotulla.atlassian.net/servicedesk/customer/portal/302/group/633/create/908" target="_blank" style="font-size:12px;color:var(--teal);text-decoration:none;font-weight:600;">Report an Issue ↗</a>
+          </div>
         </td>
         <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
         <td class="feature-uptime">—</td>
-        <td class="uptime-col"><div class="mini-bar" id="b-leadsquared"></div></td>
+        <td class="uptime-col"><div class="mini-bar" id="b-instructure"></div></td>
       </tr>
     </table>
-    <div class="drill-details" id="ls-drill">
-      <div id="ls-detail" style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;margin-top:4px;font-size:13px;color:var(--muted);">
-        Loading sync details...
-      </div>
+    <div class="drill-details" id="instructure-drill">
+      <table class="feature-table" style="margin-top:4px;">
+        <tr id="row-canvas-lms">
+          <td class="feature-name" style="padding-left:1.5rem;">Canvas LMS</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-canvas-lms"></div></td>
+        </tr>
+        <tr id="row-canvas-mobile">
+          <td class="feature-name" style="padding-left:1.5rem;">Canvas Mobile</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-canvas-mobile"></div></td>
+        </tr>
+        <tr id="row-canvas-studio">
+          <td class="feature-name" style="padding-left:1.5rem;">Canvas Studio</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-canvas-studio"></div></td>
+        </tr>
+      </table>
     </div>
 
-    <!-- Slack + Jira (no drill-downs) -->
+    <!-- Sinch -->
+    <table class="feature-table" style="margin-top:8px;">
+      <tr id="row-sinch">
+        <td class="feature-name">
+          <img src="{{ url_for('static', filename='sinchlogo.jpg') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;border-radius:3px;">Sinch
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button class="drill-toggle" onclick="toggleDrill('sinch-drill')"><span class="drill-arrow" id="sinch-drill-arrow">▸</span> View details</button>
+            <a href="https://cotulla.atlassian.net/servicedesk/customer/portal/302/group/633/create/908" target="_blank" style="font-size:12px;color:var(--teal);text-decoration:none;font-weight:600;">Report an Issue ↗</a>
+          </div>
+        </td>
+        <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+        <td class="feature-uptime">—</td>
+        <td class="uptime-col"><div class="mini-bar" id="b-sinch"></div></td>
+      </tr>
+    </table>
+    <div class="drill-details" id="sinch-drill">
+      <table class="feature-table" style="margin-top:4px;">
+        <tr id="row-sinch-connectivity">
+          <td class="feature-name" style="padding-left:1.5rem;">External Connectivity</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-sinch-connectivity"></div></td>
+        </tr>
+        <tr id="row-sinch-contactpro">
+          <td class="feature-name" style="padding-left:1.5rem;">Contact Pro</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-sinch-contactpro"></div></td>
+        </tr>
+        <tr id="row-sinch-campaigns">
+          <td class="feature-name" style="padding-left:1.5rem;">Campaigns</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-sinch-campaigns"></div></td>
+        </tr>
+        <tr id="row-sinch-chatalayer">
+          <td class="feature-name" style="padding-left:1.5rem;">Chatalayer</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-sinch-chatalayer"></div></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Slack + Jira -->
     <table class="feature-table" style="margin-top:8px;">
       <tr id="row-slack">
         <td class="feature-name"><img src="https://a.slack-edge.com/80588/marketing/img/icons/icon_slack_hash_colored.png" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;">Slack</td>
@@ -509,6 +579,24 @@
       </table>
     </div>
 
+    <!-- LeadSquared -->
+    <table class="feature-table" style="margin-top:8px;">
+      <tr id="row-leadsquared">
+        <td class="feature-name">
+          <img src="{{ url_for('static', filename='leadsquared.png') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;border-radius:3px;">LeadSquared
+          <div><button class="drill-toggle" onclick="toggleDrill('ls-drill')"><span class="drill-arrow" id="ls-drill-arrow">▸</span> View sync details</button></div>
+        </td>
+        <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+        <td class="feature-uptime">—</td>
+        <td class="uptime-col"><div class="mini-bar" id="b-leadsquared"></div></td>
+      </tr>
+    </table>
+    <div class="drill-details" id="ls-drill">
+      <div id="ls-detail" style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;margin-top:4px;font-size:13px;color:var(--muted);">
+        Loading sync details...
+      </div>
+    </div>
+
     <div style="margin-top:8px;font-size:11px;color:var(--muted);padding:0 0.25rem;">
       Status sourced from:
       <a href="https://status.anthology.com" target="_blank" style="color:var(--teal);text-decoration:none;">status.anthology.com ↗</a>
@@ -518,6 +606,10 @@
       <a href="https://jira-software.status.atlassian.com" target="_blank" style="color:var(--teal);text-decoration:none;">Jira Status ↗</a>
       &nbsp;·&nbsp;
       <a href="https://status.greenhouse.io" target="_blank" style="color:var(--teal);text-decoration:none;">Greenhouse Status ↗</a>
+      &nbsp;·&nbsp;
+      <a href="https://status.sinch.com" target="_blank" style="color:var(--teal);text-decoration:none;">Sinch Status ↗</a>
+      &nbsp;·&nbsp;
+      <a href="https://status.instructure.com" target="_blank" style="color:var(--teal);text-decoration:none;">Instructure Status ↗</a>
     </div>
   </div>
 
