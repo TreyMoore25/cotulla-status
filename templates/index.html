@@ -748,6 +748,15 @@
       const greenhouse_recruiting = data.greenhouse_recruiting || {};
       const greenhouse_harvest    = data.greenhouse_harvest    || {};
       const greenhouse_jobboards  = data.greenhouse_jobboards  || {};
+      const sinch              = data.sinch              || {};
+      const sinch_connectivity = data.sinch_connectivity || {};
+      const sinch_contactpro   = data.sinch_contactpro   || {};
+      const sinch_campaigns    = data.sinch_campaigns    || {};
+      const sinch_chatalayer   = data.sinch_chatalayer   || {};
+      const canvas             = data.canvas             || {};
+      const canvas_lms         = data.canvas_lms         || {};
+      const canvas_mobile      = data.canvas_mobile      || {};
+      const canvas_studio      = data.canvas_studio      || {};
       const school_aviation  = data.school_aviation  || {};
       const school_centura   = data.school_centura   || {};
       const school_tidewater = data.school_tidewater || {};
@@ -776,6 +785,15 @@
       buildHourlyBar('b-greenhouse-recruiting', greenhouse_recruiting);
       buildHourlyBar('b-greenhouse-harvest',    greenhouse_harvest);
       buildHourlyBar('b-greenhouse-jobboards',  greenhouse_jobboards);
+      buildHourlyBar('b-sinch',              sinch);
+      buildHourlyBar('b-sinch-connectivity', sinch_connectivity);
+      buildHourlyBar('b-sinch-contactpro',   sinch_contactpro);
+      buildHourlyBar('b-sinch-campaigns',    sinch_campaigns);
+      buildHourlyBar('b-sinch-chatalayer',   sinch_chatalayer);
+      buildHourlyBar('b-instructure',        canvas);
+      buildHourlyBar('b-canvas-lms',         canvas_lms);
+      buildHourlyBar('b-canvas-mobile',      canvas_mobile);
+      buildHourlyBar('b-canvas-studio',      canvas_studio);
       buildHourlyBar('b-school-aviation',  school_aviation);
       buildHourlyBar('b-school-centura',   school_centura);
       buildHourlyBar('b-school-tidewater', school_tidewater);
@@ -791,6 +809,8 @@
        'b-slack','b-anth-student','b-anth-reach','b-anth-occ','b-anth-raise','b-anth-crm',
        'b-leadsquared','b-jira',
        'b-greenhouse-website','b-greenhouse-recruiting','b-greenhouse-harvest','b-greenhouse-jobboards',
+       'b-sinch','b-sinch-connectivity','b-sinch-contactpro','b-sinch-campaigns','b-sinch-chatalayer',
+       'b-instructure','b-canvas-lms','b-canvas-mobile','b-canvas-studio',
        'b-school-aviation','b-school-centura','b-school-tidewater',
        'b-aim-admissions','b-aim-campuses','b-aim-programs','b-aim-resources','b-aim-about'].forEach(buildNoDataBar);
     });
@@ -853,6 +873,15 @@
         if (data.greenhouse_recruiting) updateIndicator('row-greenhouse-recruiting', data.greenhouse_recruiting);
         if (data.greenhouse_harvest)    updateIndicator('row-greenhouse-harvest',    data.greenhouse_harvest);
         if (data.greenhouse_jobboards)  updateIndicator('row-greenhouse-jobboards',  data.greenhouse_jobboards);
+        if (data.sinch)              updateIndicator('row-sinch',              data.sinch);
+        if (data.sinch_connectivity) updateIndicator('row-sinch-connectivity', data.sinch_connectivity);
+        if (data.sinch_contactpro)   updateIndicator('row-sinch-contactpro',   data.sinch_contactpro);
+        if (data.sinch_campaigns)    updateIndicator('row-sinch-campaigns',    data.sinch_campaigns);
+        if (data.sinch_chatalayer)   updateIndicator('row-sinch-chatalayer',   data.sinch_chatalayer);
+        if (data.canvas)             updateIndicator('row-instructure',        data.canvas);
+        if (data.canvas_lms)         updateIndicator('row-canvas-lms',         data.canvas_lms);
+        if (data.canvas_mobile)      updateIndicator('row-canvas-mobile',      data.canvas_mobile);
+        if (data.canvas_studio)      updateIndicator('row-canvas-studio',      data.canvas_studio);
         if (data.optimus)        updateIndicator('row-opt-web', data.optimus);
         if (data.leadsquared) {
           updateIndicator('row-leadsquared', data.leadsquared);

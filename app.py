@@ -1231,27 +1231,39 @@ def index():
 
 def _build_status():
     """Core status computation — called by the API and the cache warmer."""
-    with ThreadPoolExecutor(max_workers=8) as ex:
+    with ThreadPoolExecutor(max_workers=12) as ex:
         f_slack   = ex.submit(lambda: _cached("slack_st",    120, fetch_slack_status))
         f_ls      = ex.submit(lambda: _cached("ls_st",       120, fetch_leadsquared_status))
         f_jira    = ex.submit(lambda: _cached("jira_st",     120, fetch_jira_status))
         f_gh      = ex.submit(lambda: _cached("gh_st",       120, fetch_greenhouse_status))
+        f_sinch   = ex.submit(lambda: _cached("sinch_st",    120, fetch_sinch_status))
+        f_canvas  = ex.submit(lambda: _cached("canvas_st",   120, fetch_canvas_status))
         f_slack_h = ex.submit(lambda: _cached("slack_h",     300, get_slack_hourly_uptime))
         f_ls_h    = ex.submit(lambda: _cached("ls_h",        300, lambda: get_statuspage_hourly_uptime("https://status.leadsquared.com/api/v2/incidents.json")))
         f_jira_h  = ex.submit(lambda: _cached("jira_h",      300, lambda: get_statuspage_hourly_uptime("https://jira-service-management.status.atlassian.com/api/v2/incidents.json")))
         f_gh_h    = ex.submit(lambda: _cached("gh_h",        300, lambda: get_statuspage_hourly_uptime("https://status.greenhouse.io/api/v2/incidents.json")))
+        f_sinch_h = ex.submit(lambda: _cached("sinch_h",     300, lambda: get_statuspage_hourly_uptime("https://status.sinch.com/api/v2/incidents.json")))
+        f_canvas_h = ex.submit(lambda: _cached("canvas_h",   300, lambda: get_statuspage_hourly_uptime("https://status.instructure.com/api/v2/incidents.json")))
 
     slack_st        = f_slack.result()
     leadsquared_st  = f_ls.result()
     jira_st         = f_jira.result()
     gh_st           = f_gh.result()
+    sinch_st        = f_sinch.result()
+    canvas_st       = f_canvas.result()
 
-    gh_hourly = f_gh_h.result()
+    gh_hourly     = f_gh_h.result()
+    sinch_hourly  = f_sinch_h.result()
+    canvas_hourly = f_canvas_h.result()
     slack_st["uptime_24h"]       = uptime_pct_from_hourly(f_slack_h.result())
     leadsquared_st["uptime_24h"] = uptime_pct_from_hourly(f_ls_h.result())
     jira_st["uptime_24h"]        = uptime_pct_from_hourly(f_jira_h.result())
     for key in gh_st:
         gh_st[key]["uptime_24h"] = uptime_pct_from_hourly(gh_hourly)
+    for key in sinch_st:
+        sinch_st[key]["uptime_24h"] = uptime_pct_from_hourly(sinch_hourly)
+    for key in canvas_st:
+        canvas_st[key]["uptime_24h"] = uptime_pct_from_hourly(canvas_hourly)
 
     status = {
         "slack":                 slack_st,
@@ -1261,6 +1273,15 @@ def _build_status():
         "greenhouse_recruiting": gh_st["greenhouse_recruiting"],
         "greenhouse_harvest":    gh_st["greenhouse_harvest"],
         "greenhouse_jobboards":  gh_st["greenhouse_jobboards"],
+        "sinch":                 sinch_st["sinch"],
+        "sinch_connectivity":    sinch_st["sinch_connectivity"],
+        "sinch_contactpro":      sinch_st["sinch_contactpro"],
+        "sinch_campaigns":       sinch_st["sinch_campaigns"],
+        "sinch_chatalayer":      sinch_st["sinch_chatalayer"],
+        "canvas":                canvas_st["canvas"],
+        "canvas_lms":            canvas_st["canvas_lms"],
+        "canvas_mobile":         canvas_st["canvas_mobile"],
+        "canvas_studio":         canvas_st["canvas_studio"],
     }
 
     # Batch all uptime from DB (including Optimus — no longer using App Insights for %)
