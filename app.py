@@ -358,9 +358,10 @@ def run_third_party_alerts():
             ("Checkr",                  "https://checkrstatus.com/api/v2/incidents.json"),
         ]
         try:
+            _sp_filters = {"Snowflake": _snowflake_us_incident}
             with ThreadPoolExecutor(max_workers=10) as ex:
                 f_slk = ex.submit(_fetch_slack_incidents, inc_cutoff)
-                sp_fts = [ex.submit(_fetch_statuspage_incidents, name, u, inc_cutoff) for name, u in sp_sources]
+                sp_fts = [ex.submit(_fetch_statuspage_incidents, name, u, inc_cutoff, _sp_filters.get(name)) for name, u in sp_sources]
             inc_results = f_slk.result()
             for f in sp_fts:
                 inc_results.extend(f.result())
@@ -738,22 +739,41 @@ def fetch_checkr_status():
         return {"status": "unknown", "label": "Unknown"}
 
 
+_SNOWFLAKE_US_KEYWORDS = [" us", "govcloud"]
+
+def _snowflake_us_incident(title):
+    """Return True if a Snowflake incident title refers to a US/Canada region."""
+    t = title.lower()
+    return any(k in t for k in _SNOWFLAKE_US_KEYWORDS)
+
 def fetch_snowflake_status():
+    """Derive Snowflake status from US/Canada/GovCloud region components only."""
+    STATUS_ORDER = ["major_outage", "partial_outage", "degraded_performance", "under_maintenance", "operational"]
+    STATUS_MAP = {
+        "operational":          {"status": "operational", "label": "Operational"},
+        "degraded_performance": {"status": "degraded",    "label": "Degraded"},
+        "under_maintenance":    {"status": "degraded",    "label": "Under Maintenance"},
+        "partial_outage":       {"status": "partial",     "label": "Partial Outage"},
+        "major_outage":         {"status": "outage",      "label": "Major Outage"},
+    }
     try:
         req = urllib.request.Request(
-            "https://status.snowflake.com/api/v2/status.json",
+            "https://status.snowflake.com/api/v2/components.json",
             headers={"User-Agent": "Mozilla/5.0"},
         )
         with urllib.request.urlopen(req, timeout=10) as r:
             data = json.loads(r.read())
-        indicator = data.get("status", {}).get("indicator", "unknown")
-        if indicator == "none":
-            return {"status": "operational", "label": "Operational"}
-        if indicator == "minor":
-            return {"status": "degraded", "label": "Degraded"}
-        if indicator in ("major", "critical"):
-            return {"status": "outage", "label": "Major Outage"}
-        return {"status": "unknown", "label": "Unknown"}
+        worst = "operational"
+        for c in data.get("components", []):
+            if c.get("group_id"):
+                continue  # skip sub-components, only evaluate region groups
+            name = c.get("name", "").lower()
+            if not any(k in name for k in _SNOWFLAKE_US_KEYWORDS):
+                continue
+            s = c.get("status", "operational")
+            if s in STATUS_ORDER and STATUS_ORDER.index(s) < STATUS_ORDER.index(worst):
+                worst = s
+        return STATUS_MAP.get(worst, {"status": "unknown", "label": "Unknown"})
     except Exception as e:
         _log_error("snowflake_status", e)
         return {"status": "unknown", "label": "Unknown"}
@@ -1503,7 +1523,7 @@ def _fetch_slack_incidents(cutoff):
     return items
 
 
-def _fetch_statuspage_incidents(service_name, url, cutoff):
+def _fetch_statuspage_incidents(service_name, url, cutoff, title_filter=None):
     items = []
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -1511,6 +1531,9 @@ def _fetch_statuspage_incidents(service_name, url, cutoff):
             data = json.loads(r.read())
         for inc in data.get("incidents", []):
             try:
+                title = inc.get("name", "Incident")
+                if title_filter and not title_filter(title):
+                    continue
                 start = datetime.fromisoformat(
                     (inc.get("started_at") or inc.get("created_at")).replace("Z", "+00:00")
                 ).astimezone(timezone.utc)
@@ -1520,7 +1543,7 @@ def _fetch_statuspage_incidents(service_name, url, cutoff):
                     continue
                 items.append({
                     "service": service_name,
-                    "title": inc.get("name", "Incident"),
+                    "title": title,
                     "status": "resolved" if end else "active",
                     "impact": inc.get("impact", "minor"),
                     "started_at": start.strftime("%b %d, %Y %-I:%M %p UTC"),
@@ -1553,9 +1576,10 @@ def api_third_party_incidents():
         ("Checkr",                 "https://checkrstatus.com/api/v2/incidents.json"),
     ]
 
+    _sp_filters = {"Snowflake": _snowflake_us_incident}
     with ThreadPoolExecutor(max_workers=10) as ex:
         f_slack = ex.submit(_fetch_slack_incidents, cutoff)
-        sp_futures = [ex.submit(_fetch_statuspage_incidents, name, url, cutoff) for name, url in statuspage_sources]
+        sp_futures = [ex.submit(_fetch_statuspage_incidents, name, url, cutoff, _sp_filters.get(name)) for name, url in statuspage_sources]
 
     results = f_slack.result()
     for f in sp_futures:
