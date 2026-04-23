@@ -212,6 +212,8 @@ _TP_LABELS = {
     "tp_canvas_lms":            "Canvas LMS",
     "tp_canvas_mobile":         "Canvas Mobile",
     "tp_canvas_studio":         "Canvas Studio",
+    "tp_snowflake":             "Snowflake",
+    "tp_checkr":                "Checkr",
 }
 
 
@@ -311,6 +313,14 @@ def run_third_party_alerts():
                 checks[f"tp_{sub}"] = status
         except Exception:
             pass
+        try:
+            checks["tp_snowflake"] = fetch_snowflake_status()
+        except Exception:
+            pass
+        try:
+            checks["tp_checkr"] = fetch_checkr_status()
+        except Exception:
+            pass
 
         for key, result in checks.items():
             is_down = result["status"] not in ("operational", "unknown")
@@ -344,9 +354,11 @@ def run_third_party_alerts():
             ("Greenhouse",              "https://status.greenhouse.io/api/v2/incidents.json"),
             ("Sinch",                   "https://status.sinch.com/api/v2/incidents.json"),
             ("Instructure (Canvas)",    "https://status.instructure.com/api/v2/incidents.json"),
+            ("Snowflake",               "https://status.snowflake.com/api/v2/incidents.json"),
+            ("Checkr",                  "https://checkrstatus.com/api/v2/incidents.json"),
         ]
         try:
-            with ThreadPoolExecutor(max_workers=8) as ex:
+            with ThreadPoolExecutor(max_workers=10) as ex:
                 f_slk = ex.submit(_fetch_slack_incidents, inc_cutoff)
                 sp_fts = [ex.submit(_fetch_statuspage_incidents, name, u, inc_cutoff) for name, u in sp_sources]
             inc_results = f_slk.result()
@@ -631,12 +643,14 @@ def fetch_sinch_status():
         "partial_outage":       {"status": "partial",     "label": "Partial Outage"},
         "major_outage":         {"status": "outage",      "label": "Major Outage"},
     }
-    component_names = {
-        "sinch_connectivity": "external connectivity",
-        "sinch_contactpro":   "contact pro",
-        "sinch_campaigns":    "campaigns",
-        "sinch_chatalayer":   "chatalayer",
+    # All terms in each list must match the component name (case-insensitive)
+    component_filters = {
+        "sinch_connectivity": ["external connectivity"],
+        "sinch_contactpro":   ["contact pro", "north america"],
+        "sinch_campaigns":    ["campaigns", "north america"],
+        "sinch_chatalayer":   ["chatlayer", "- us"],
     }
+    US_KEYWORDS = ["- us", "north america", "us -", "smpp - us", "http - us", "rest - us", "mms - us", "rcs - us"]
     try:
         req = urllib.request.Request(
             "https://status.sinch.com/api/v2/components.json",
@@ -645,16 +659,18 @@ def fetch_sinch_status():
         with urllib.request.urlopen(req, timeout=10) as r:
             data = json.loads(r.read())
         components = data.get("components", [])
-        all_statuses = [c["status"] for c in components]
-        if any(s == "major_outage" for s in all_statuses):
+        # Overall: derive from US-specific components only
+        us_components = [c for c in components if any(kw in c["name"].lower() for kw in US_KEYWORDS)]
+        us_statuses = [c["status"] for c in us_components] if us_components else [c["status"] for c in components]
+        if any(s == "major_outage" for s in us_statuses):
             overall = {"status": "outage", "label": "Major Outage"}
-        elif any(s in ("degraded_performance", "partial_outage") for s in all_statuses):
+        elif any(s in ("degraded_performance", "partial_outage") for s in us_statuses):
             overall = {"status": "degraded", "label": "Degraded"}
         else:
             overall = {"status": "operational", "label": "Operational"}
         result = {"sinch": overall}
-        for key, name in component_names.items():
-            matched = next((c for c in components if name in c["name"].lower()), None)
+        for key, terms in component_filters.items():
+            matched = next((c for c in components if all(t in c["name"].lower() for t in terms)), None)
             raw = matched["status"] if matched else "unknown"
             result[key] = STATUS_MAP.get(raw, {"status": "unknown", "label": "Unknown"})
         return result
@@ -699,6 +715,48 @@ def fetch_canvas_status():
     except Exception as e:
         _log_error("canvas_status", e)
         return {k: {"status": "unknown", "label": "Unknown"} for k in ["canvas", "canvas_lms", "canvas_mobile", "canvas_studio"]}
+
+
+def fetch_checkr_status():
+    try:
+        req = urllib.request.Request(
+            "https://checkrstatus.com/api/v2/status.json",
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = json.loads(r.read())
+        indicator = data.get("status", {}).get("indicator", "unknown")
+        if indicator == "none":
+            return {"status": "operational", "label": "Operational"}
+        if indicator == "minor":
+            return {"status": "degraded", "label": "Degraded"}
+        if indicator in ("major", "critical"):
+            return {"status": "outage", "label": "Major Outage"}
+        return {"status": "unknown", "label": "Unknown"}
+    except Exception as e:
+        _log_error("checkr_status", e)
+        return {"status": "unknown", "label": "Unknown"}
+
+
+def fetch_snowflake_status():
+    try:
+        req = urllib.request.Request(
+            "https://status.snowflake.com/api/v2/status.json",
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = json.loads(r.read())
+        indicator = data.get("status", {}).get("indicator", "unknown")
+        if indicator == "none":
+            return {"status": "operational", "label": "Operational"}
+        if indicator == "minor":
+            return {"status": "degraded", "label": "Degraded"}
+        if indicator in ("major", "critical"):
+            return {"status": "outage", "label": "Major Outage"}
+        return {"status": "unknown", "label": "Unknown"}
+    except Exception as e:
+        _log_error("snowflake_status", e)
+        return {"status": "unknown", "label": "Unknown"}
 
 
 def fetch_leadsquared_status():
@@ -1231,19 +1289,23 @@ def index():
 
 def _build_status():
     """Core status computation — called by the API and the cache warmer."""
-    with ThreadPoolExecutor(max_workers=12) as ex:
+    with ThreadPoolExecutor(max_workers=14) as ex:
         f_slack   = ex.submit(lambda: _cached("slack_st",    120, fetch_slack_status))
         f_ls      = ex.submit(lambda: _cached("ls_st",       120, fetch_leadsquared_status))
         f_jira    = ex.submit(lambda: _cached("jira_st",     120, fetch_jira_status))
         f_gh      = ex.submit(lambda: _cached("gh_st",       120, fetch_greenhouse_status))
-        f_sinch   = ex.submit(lambda: _cached("sinch_st",    120, fetch_sinch_status))
-        f_canvas  = ex.submit(lambda: _cached("canvas_st",   120, fetch_canvas_status))
+        f_sinch     = ex.submit(lambda: _cached("sinch_st",      120, fetch_sinch_status))
+        f_canvas    = ex.submit(lambda: _cached("canvas_st",     120, fetch_canvas_status))
+        f_snowflake = ex.submit(lambda: _cached("snowflake_st",  120, fetch_snowflake_status))
+        f_checkr    = ex.submit(lambda: _cached("checkr_st",     120, fetch_checkr_status))
         f_slack_h = ex.submit(lambda: _cached("slack_h",     300, get_slack_hourly_uptime))
         f_ls_h    = ex.submit(lambda: _cached("ls_h",        300, lambda: get_statuspage_hourly_uptime("https://status.leadsquared.com/api/v2/incidents.json")))
         f_jira_h  = ex.submit(lambda: _cached("jira_h",      300, lambda: get_statuspage_hourly_uptime("https://jira-service-management.status.atlassian.com/api/v2/incidents.json")))
         f_gh_h    = ex.submit(lambda: _cached("gh_h",        300, lambda: get_statuspage_hourly_uptime("https://status.greenhouse.io/api/v2/incidents.json")))
-        f_sinch_h = ex.submit(lambda: _cached("sinch_h",     300, lambda: get_statuspage_hourly_uptime("https://status.sinch.com/api/v2/incidents.json")))
-        f_canvas_h = ex.submit(lambda: _cached("canvas_h",   300, lambda: get_statuspage_hourly_uptime("https://status.instructure.com/api/v2/incidents.json")))
+        f_sinch_h    = ex.submit(lambda: _cached("sinch_h",     300, lambda: get_statuspage_hourly_uptime("https://status.sinch.com/api/v2/incidents.json")))
+        f_canvas_h   = ex.submit(lambda: _cached("canvas_h",   300, lambda: get_statuspage_hourly_uptime("https://status.instructure.com/api/v2/incidents.json")))
+        f_snowflake_h = ex.submit(lambda: _cached("snowflake_h", 300, lambda: get_statuspage_hourly_uptime("https://status.snowflake.com/api/v2/incidents.json")))
+        f_checkr_h    = ex.submit(lambda: _cached("checkr_h",    300, lambda: get_statuspage_hourly_uptime("https://checkrstatus.com/api/v2/incidents.json")))
 
     slack_st        = f_slack.result()
     leadsquared_st  = f_ls.result()
@@ -1251,6 +1313,8 @@ def _build_status():
     gh_st           = f_gh.result()
     sinch_st        = f_sinch.result()
     canvas_st       = f_canvas.result()
+    snowflake_st    = f_snowflake.result()
+    checkr_st       = f_checkr.result()
 
     gh_hourly     = f_gh_h.result()
     sinch_hourly  = f_sinch_h.result()
@@ -1264,6 +1328,8 @@ def _build_status():
         sinch_st[key]["uptime_24h"] = uptime_pct_from_hourly(sinch_hourly)
     for key in canvas_st:
         canvas_st[key]["uptime_24h"] = uptime_pct_from_hourly(canvas_hourly)
+    snowflake_st["uptime_24h"] = uptime_pct_from_hourly(f_snowflake_h.result())
+    checkr_st["uptime_24h"]    = uptime_pct_from_hourly(f_checkr_h.result())
 
     status = {
         "slack":                 slack_st,
@@ -1282,6 +1348,8 @@ def _build_status():
         "canvas_lms":            canvas_st["canvas_lms"],
         "canvas_mobile":         canvas_st["canvas_mobile"],
         "canvas_studio":         canvas_st["canvas_studio"],
+        "snowflake":             snowflake_st,
+        "checkr":                checkr_st,
     }
 
     # Batch all uptime from DB (including Optimus — no longer using App Insights for %)
@@ -1343,11 +1411,15 @@ def _build_hourly():
         f_ls     = ex.submit(lambda: _cached("ls_h",       300, lambda: get_statuspage_hourly_uptime("https://status.leadsquared.com/api/v2/incidents.json")))
         f_jira   = ex.submit(lambda: _cached("jira_h",     300, lambda: get_statuspage_hourly_uptime("https://jira-service-management.status.atlassian.com/api/v2/incidents.json")))
         f_gh     = ex.submit(lambda: _cached("gh_h",       300, lambda: get_statuspage_hourly_uptime("https://status.greenhouse.io/api/v2/incidents.json")))
-        f_sinch  = ex.submit(lambda: _cached("sinch_h",    300, lambda: get_statuspage_hourly_uptime("https://status.sinch.com/api/v2/incidents.json")))
-        f_canvas = ex.submit(lambda: _cached("canvas_h",   300, lambda: get_statuspage_hourly_uptime("https://status.instructure.com/api/v2/incidents.json")))
-    gh_hourly     = f_gh.result()
-    sinch_hourly  = f_sinch.result()
-    canvas_hourly = f_canvas.result()
+        f_sinch     = ex.submit(lambda: _cached("sinch_h",      300, lambda: get_statuspage_hourly_uptime("https://status.sinch.com/api/v2/incidents.json")))
+        f_canvas    = ex.submit(lambda: _cached("canvas_h",     300, lambda: get_statuspage_hourly_uptime("https://status.instructure.com/api/v2/incidents.json")))
+        f_snowflake = ex.submit(lambda: _cached("snowflake_h",  300, lambda: get_statuspage_hourly_uptime("https://status.snowflake.com/api/v2/incidents.json")))
+        f_checkr    = ex.submit(lambda: _cached("checkr_h",     300, lambda: get_statuspage_hourly_uptime("https://checkrstatus.com/api/v2/incidents.json")))
+    gh_hourly        = f_gh.result()
+    sinch_hourly     = f_sinch.result()
+    canvas_hourly    = f_canvas.result()
+    snowflake_hourly = f_snowflake.result()
+    checkr_hourly    = f_checkr.result()
     return {
         "optimus":               db_hourly["optimus"],
         "imap":                  db_hourly["imap"],
@@ -1374,6 +1446,8 @@ def _build_hourly():
         "canvas_lms":            canvas_hourly,
         "canvas_mobile":         canvas_hourly,
         "canvas_studio":         canvas_hourly,
+        "snowflake":             snowflake_hourly,
+        "checkr":                checkr_hourly,
         "school_aviation":       db_hourly["school_aviation"],
         "school_centura":        db_hourly["school_centura"],
         "school_tidewater":      db_hourly["school_tidewater"],
@@ -1444,8 +1518,6 @@ def _fetch_statuspage_incidents(service_name, url, cutoff):
                 end = datetime.fromisoformat(end_str.replace("Z", "+00:00")).astimezone(timezone.utc) if end_str else None
                 if end and end < cutoff:
                     continue
-                if not end and start < cutoff:
-                    continue
                 items.append({
                     "service": service_name,
                     "title": inc.get("name", "Incident"),
@@ -1477,9 +1549,11 @@ def api_third_party_incidents():
         ("Greenhouse",             "https://status.greenhouse.io/api/v2/incidents.json"),
         ("Sinch",                  "https://status.sinch.com/api/v2/incidents.json"),
         ("Instructure (Canvas)",   "https://status.instructure.com/api/v2/incidents.json"),
+        ("Snowflake",              "https://status.snowflake.com/api/v2/incidents.json"),
+        ("Checkr",                 "https://checkrstatus.com/api/v2/incidents.json"),
     ]
 
-    with ThreadPoolExecutor(max_workers=8) as ex:
+    with ThreadPoolExecutor(max_workers=10) as ex:
         f_slack = ex.submit(_fetch_slack_incidents, cutoff)
         sp_futures = [ex.submit(_fetch_statuspage_incidents, name, url, cutoff) for name, url in statuspage_sources]
 
@@ -1535,6 +1609,7 @@ def api_incidents():
 # --- Admin routes ---
 @app.route("/admin/login")
 def admin_login():
+    session.clear()
     flow = get_msal_app().initiate_auth_code_flow(SCOPE, redirect_uri=REDIRECT_URI)
     session["flow"] = flow
     return redirect(flow["auth_uri"])
@@ -1543,19 +1618,29 @@ def admin_login():
 @app.route("/auth/callback")
 def auth_callback():
     try:
-        result = get_msal_app().acquire_token_by_auth_code_flow(
-            session.get("flow", {}), request.args
-        )
+        flow = session.get("flow", {})
+        if not flow:
+            _log_error("auth_callback", "No flow in session — session may have expired or cookie was too large")
+            return "Login session expired — please try again.", 400
+        result = get_msal_app().acquire_token_by_auth_code_flow(flow, request.args)
         if "access_token" in result:
             claims = result.get("id_token_claims", {})
             email = claims.get("preferred_username", "").lower()
             if email not in [a.lower() for a in AUTHORIZED_ADMINS]:
                 session.clear()
-                return "Access denied — you are not an authorized admin.", 403
-            session["user"] = claims
+                return f"Access denied — {email} is not an authorized admin.", 403
+            # Store only essential fields to keep the session cookie small
+            session.clear()
+            session["user"] = {
+                "preferred_username": claims.get("preferred_username", ""),
+                "name": claims.get("name", ""),
+            }
             return redirect(url_for("index"))
-        return f"Login failed: {result.get('error_description')}", 401
+        err = result.get("error_description") or result.get("error") or "Unknown error"
+        _log_error("auth_callback", f"Token acquisition failed: {err}")
+        return f"Login failed: {err}", 401
     except Exception as e:
+        _log_error("auth_callback", f"Auth exception: {e}")
         return f"Auth error: {e}", 500
 
 

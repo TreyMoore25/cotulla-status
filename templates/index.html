@@ -579,6 +579,30 @@
       </table>
     </div>
 
+    <!-- Snowflake -->
+    <table class="feature-table" style="margin-top:8px;">
+      <tr id="row-snowflake">
+        <td class="feature-name">
+          <img src="{{ url_for('static', filename='snowflake.png') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;border-radius:3px;">Snowflake
+        </td>
+        <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+        <td class="feature-uptime">—</td>
+        <td class="uptime-col"><div class="mini-bar" id="b-snowflake"></div></td>
+      </tr>
+    </table>
+
+    <!-- Checkr -->
+    <table class="feature-table" style="margin-top:8px;">
+      <tr id="row-checkr">
+        <td class="feature-name">
+          <img src="{{ url_for('static', filename='checkr.png') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;border-radius:3px;">Checkr
+        </td>
+        <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+        <td class="feature-uptime">—</td>
+        <td class="uptime-col"><div class="mini-bar" id="b-checkr"></div></td>
+      </tr>
+    </table>
+
     <!-- LeadSquared -->
     <table class="feature-table" style="margin-top:8px;">
       <tr id="row-leadsquared">
@@ -610,6 +634,10 @@
       <a href="https://status.sinch.com" target="_blank" style="color:var(--teal);text-decoration:none;">Sinch Status ↗</a>
       &nbsp;·&nbsp;
       <a href="https://status.instructure.com" target="_blank" style="color:var(--teal);text-decoration:none;">Instructure Status ↗</a>
+      &nbsp;·&nbsp;
+      <a href="https://status.snowflake.com" target="_blank" style="color:var(--teal);text-decoration:none;">Snowflake Status ↗</a>
+      &nbsp;·&nbsp;
+      <a href="https://checkrstatus.com" target="_blank" style="color:var(--teal);text-decoration:none;">Checkr Status ↗</a>
     </div>
   </div>
 
@@ -655,10 +683,26 @@
         <div class="admin-form">
           <select id="incidentService">
             <option value="">Select affected service...</option>
-            <option value="Optimus">Optimus — Student Portal</option>
-            <option value="iMAP">iMAP — Identity Management</option>
-            <option value="Anthology">Anthology Americas</option>
-            <option value="Slack">Slack</option>
+            <optgroup label="Internal">
+              <option value="Optimus">Optimus — Student Management</option>
+              <option value="iMAP">iMAP — Identity Management</option>
+            </optgroup>
+            <optgroup label="Student-Facing Sites">
+              <option value="Aviation Maintenance">Aviation Maintenance</option>
+              <option value="Centura College">Centura College</option>
+              <option value="Tidewater Tech Trades">Tidewater Tech Trades</option>
+            </optgroup>
+            <optgroup label="Third-Party">
+              <option value="Anthology">Anthology</option>
+              <option value="Instructure (Canvas)">Instructure (Canvas)</option>
+              <option value="Sinch">Sinch</option>
+              <option value="Slack">Slack</option>
+              <option value="Jira Service Management">Jira Service Management</option>
+              <option value="Greenhouse">Greenhouse</option>
+              <option value="Snowflake">Snowflake</option>
+              <option value="Checkr">Checkr</option>
+              <option value="LeadSquared">LeadSquared</option>
+            </optgroup>
           </select>
           <select id="incidentSeverity">
             <option value="">Select severity...</option>
@@ -757,6 +801,8 @@
       const canvas_lms         = data.canvas_lms         || {};
       const canvas_mobile      = data.canvas_mobile      || {};
       const canvas_studio      = data.canvas_studio      || {};
+      const snowflake          = data.snowflake          || {};
+      const checkr             = data.checkr             || {};
       const school_aviation  = data.school_aviation  || {};
       const school_centura   = data.school_centura   || {};
       const school_tidewater = data.school_tidewater || {};
@@ -794,6 +840,8 @@
       buildHourlyBar('b-canvas-lms',         canvas_lms);
       buildHourlyBar('b-canvas-mobile',      canvas_mobile);
       buildHourlyBar('b-canvas-studio',      canvas_studio);
+      buildHourlyBar('b-snowflake',          snowflake);
+      buildHourlyBar('b-checkr',             checkr);
       buildHourlyBar('b-school-aviation',  school_aviation);
       buildHourlyBar('b-school-centura',   school_centura);
       buildHourlyBar('b-school-tidewater', school_tidewater);
@@ -811,6 +859,7 @@
        'b-greenhouse-website','b-greenhouse-recruiting','b-greenhouse-harvest','b-greenhouse-jobboards',
        'b-sinch','b-sinch-connectivity','b-sinch-contactpro','b-sinch-campaigns','b-sinch-chatalayer',
        'b-instructure','b-canvas-lms','b-canvas-mobile','b-canvas-studio',
+       'b-snowflake','b-checkr',
        'b-school-aviation','b-school-centura','b-school-tidewater',
        'b-aim-admissions','b-aim-campuses','b-aim-programs','b-aim-resources','b-aim-about'].forEach(buildNoDataBar);
     });
@@ -882,6 +931,8 @@
         if (data.canvas_lms)         updateIndicator('row-canvas-lms',         data.canvas_lms);
         if (data.canvas_mobile)      updateIndicator('row-canvas-mobile',      data.canvas_mobile);
         if (data.canvas_studio)      updateIndicator('row-canvas-studio',      data.canvas_studio);
+        if (data.snowflake)          updateIndicator('row-snowflake',           data.snowflake);
+        if (data.checkr)             updateIndicator('row-checkr',              data.checkr);
         if (data.optimus)        updateIndicator('row-opt-web', data.optimus);
         if (data.leadsquared) {
           updateIndicator('row-leadsquared', data.leadsquared);
