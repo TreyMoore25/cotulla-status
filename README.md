@@ -147,13 +147,18 @@ Features:
 - Updated "Status sourced from" footer links to include Snowflake and Checkr
 
 ### Alerting & Incident Feed
-- Added `fetch_snowflake_status()` — polls `status.snowflake.com/api/v2/status.json`
+- Added `fetch_snowflake_status()` — polls `status.snowflake.com/api/v2/components.json`, filters to US/GovCloud regions only
 - Added `fetch_checkr_status()` — polls `checkrstatus.com/api/v2/status.json`
 - Wired Snowflake and Checkr into `run_third_party_alerts()` for real-time Slack state-change alerts
 - Added Snowflake and Checkr to incident feed sources for new incident Slack alerts
-- **Fixed active incident display** — unresolved incidents now always appear in the rolling 7-day list regardless of how old they are; only resolved incidents are subject to the 7-day cutoff (previously an unresolved incident older than 7 days, like the Snowflake AWS UAE outage, would be silently excluded)
+- **Fixed active incident display** — unresolved incidents now always appear in the rolling 7-day list regardless of how old they are; only resolved incidents are subject to the 7-day cutoff
 
-### Sinch
+### Snowflake — US-Only Filtering
+- `fetch_snowflake_status()` uses `components.json` and evaluates only region groups containing `" us"` or `"govcloud"` in the name — non-US outages (e.g. AWS Middle East UAE) are ignored
+- Incident feed filters to US/GovCloud incidents by title keyword — non-US incidents excluded from 7-day list and Slack alerts
+- `get_statuspage_hourly_uptime()` now accepts an optional `title_filter` — Snowflake hourly bars and uptime percentage reflect US-region incidents only
+
+### Sinch — US-Only Filtering
 - Updated `fetch_sinch_status()` to filter US-only components (North America, `- US` keyword matching) for overall status and sub-service mapping
 - Sub-services now reflect US-region health only: External Connectivity, Contact Pro, Campaigns, Chatalayer
 
