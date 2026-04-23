@@ -1,7 +1,7 @@
 # Cotulla Education — System Status Page
 
 **Live site:** https://cotulla-uptime.azurewebsites.net  
-**Last updated:** April 21, 2026
+**Last updated:** April 23, 2026
 
 ---
 
@@ -135,6 +135,35 @@ Features:
 - Log new incidents (service, severity, description)
 - Resolve or delete active incidents
 - View and clear backend error log
+
+---
+
+## Sprint Work — April 23, 2026
+
+### Status Page — UI Updates
+- Added Snowflake (with logo) to Third-Party Services with status row, hourly bars, and uptime percentage
+- Added Checkr (with logo) to Third-Party Services with status row, hourly bars, and uptime percentage
+- Reordered Third-Party Services: Anthology → Canvas → Sinch → Slack → Jira → Greenhouse → Snowflake → Checkr → LeadSquared
+- Updated "Status sourced from" footer links to include Snowflake and Checkr
+
+### Alerting & Incident Feed
+- Added `fetch_snowflake_status()` — polls `status.snowflake.com/api/v2/status.json`
+- Added `fetch_checkr_status()` — polls `checkrstatus.com/api/v2/status.json`
+- Wired Snowflake and Checkr into `run_third_party_alerts()` for real-time Slack state-change alerts
+- Added Snowflake and Checkr to incident feed sources for new incident Slack alerts
+- **Fixed active incident display** — unresolved incidents now always appear in the rolling 7-day list regardless of how old they are; only resolved incidents are subject to the 7-day cutoff (previously an unresolved incident older than 7 days, like the Snowflake AWS UAE outage, would be silently excluded)
+
+### Sinch
+- Updated `fetch_sinch_status()` to filter US-only components (North America, `- US` keyword matching) for overall status and sub-service mapping
+- Sub-services now reflect US-region health only: External Connectivity, Contact Pro, Campaigns, Chatalayer
+
+### Admin Panel
+- Fixed login failure caused by Flask session cookie overflow — MSAL auth flow data + full token claims exceeded the 4KB cookie limit
+- Fixed by clearing session before starting OAuth flow and storing only essential claims (`preferred_username`, `name`) after login
+- Updated service dropdown to full grouped list: Internal / Student-Facing / Third-Party
+
+### Infrastructure
+- Bumped `ThreadPoolExecutor` max_workers across all executors to handle additional concurrent fetches (up to 14 in `_build_status`)
 
 ---
 
