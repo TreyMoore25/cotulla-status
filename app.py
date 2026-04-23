@@ -1080,7 +1080,7 @@ def get_slack_hourly_uptime():
         return {}
 
 
-def get_statuspage_hourly_uptime(incidents_url):
+def get_statuspage_hourly_uptime(incidents_url, title_filter=None):
     try:
         req = urllib.request.Request(incidents_url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=20) as r:
@@ -1090,6 +1090,8 @@ def get_statuspage_hourly_uptime(incidents_url):
         cutoff = now - timedelta(hours=24)
         hourly = _build_24h_slots()
         for incident in incidents:
+            if title_filter and not title_filter(incident.get("name", "")):
+                continue
             start_str = incident.get("started_at") or incident.get("created_at", "")
             end_str = incident.get("resolved_at") or ""
             try:
@@ -1324,7 +1326,7 @@ def _build_status():
         f_gh_h    = ex.submit(lambda: _cached("gh_h",        300, lambda: get_statuspage_hourly_uptime("https://status.greenhouse.io/api/v2/incidents.json")))
         f_sinch_h    = ex.submit(lambda: _cached("sinch_h",     300, lambda: get_statuspage_hourly_uptime("https://status.sinch.com/api/v2/incidents.json")))
         f_canvas_h   = ex.submit(lambda: _cached("canvas_h",   300, lambda: get_statuspage_hourly_uptime("https://status.instructure.com/api/v2/incidents.json")))
-        f_snowflake_h = ex.submit(lambda: _cached("snowflake_h", 300, lambda: get_statuspage_hourly_uptime("https://status.snowflake.com/api/v2/incidents.json")))
+        f_snowflake_h = ex.submit(lambda: _cached("snowflake_h", 300, lambda: get_statuspage_hourly_uptime("https://status.snowflake.com/api/v2/incidents.json", _snowflake_us_incident)))
         f_checkr_h    = ex.submit(lambda: _cached("checkr_h",    300, lambda: get_statuspage_hourly_uptime("https://checkrstatus.com/api/v2/incidents.json")))
 
     slack_st        = f_slack.result()
@@ -1433,7 +1435,7 @@ def _build_hourly():
         f_gh     = ex.submit(lambda: _cached("gh_h",       300, lambda: get_statuspage_hourly_uptime("https://status.greenhouse.io/api/v2/incidents.json")))
         f_sinch     = ex.submit(lambda: _cached("sinch_h",      300, lambda: get_statuspage_hourly_uptime("https://status.sinch.com/api/v2/incidents.json")))
         f_canvas    = ex.submit(lambda: _cached("canvas_h",     300, lambda: get_statuspage_hourly_uptime("https://status.instructure.com/api/v2/incidents.json")))
-        f_snowflake = ex.submit(lambda: _cached("snowflake_h",  300, lambda: get_statuspage_hourly_uptime("https://status.snowflake.com/api/v2/incidents.json")))
+        f_snowflake = ex.submit(lambda: _cached("snowflake_h",  300, lambda: get_statuspage_hourly_uptime("https://status.snowflake.com/api/v2/incidents.json", _snowflake_us_incident)))
         f_checkr    = ex.submit(lambda: _cached("checkr_h",     300, lambda: get_statuspage_hourly_uptime("https://checkrstatus.com/api/v2/incidents.json")))
     gh_hourly        = f_gh.result()
     sinch_hourly     = f_sinch.result()
