@@ -214,6 +214,8 @@ _TP_LABELS = {
     "tp_canvas_studio":         "Canvas Studio",
     "tp_snowflake":             "Snowflake",
     "tp_checkr":                "Checkr",
+    "tp_docusign_esignature":   "DocuSign eSignature",
+    "tp_docusign_thirdparty":   "DocuSign — Third Party Services",
 }
 
 
@@ -321,6 +323,11 @@ def run_third_party_alerts():
             checks["tp_checkr"] = fetch_checkr_status()
         except Exception:
             pass
+        try:
+            for sub, status in fetch_docusign_status().items():
+                checks[f"tp_{sub}"] = status
+        except Exception:
+            pass
 
         for key, result in checks.items():
             is_down = result["status"] not in ("operational", "unknown")
@@ -356,6 +363,7 @@ def run_third_party_alerts():
             ("Instructure (Canvas)",    "https://status.instructure.com/api/v2/incidents.json"),
             ("Snowflake",               "https://status.snowflake.com/api/v2/incidents.json"),
             ("Checkr",                  "https://checkrstatus.com/api/v2/incidents.json"),
+            ("DocuSign",                "https://status.docusign.com/api/v2/incidents.json"),
         ]
         try:
             _sp_filters = {"Snowflake": _snowflake_us_incident}
@@ -737,6 +745,40 @@ def fetch_checkr_status():
     except Exception as e:
         _log_error("checkr_status", e)
         return {"status": "unknown", "label": "Unknown"}
+
+
+def fetch_docusign_status():
+    """Return status for DocuSign eSignature and Third Party Services components."""
+    STATUS_MAP = {
+        "operational":          {"status": "operational", "label": "Operational"},
+        "degraded_performance": {"status": "degraded",    "label": "Degraded"},
+        "under_maintenance":    {"status": "degraded",    "label": "Under Maintenance"},
+        "partial_outage":       {"status": "partial",     "label": "Partial Outage"},
+        "major_outage":         {"status": "outage",      "label": "Major Outage"},
+    }
+    _default = {"status": "unknown", "label": "Unknown"}
+    result = {
+        "docusign_esignature":   dict(_default),
+        "docusign_thirdparty":   dict(_default),
+    }
+    try:
+        req = urllib.request.Request(
+            "https://status.docusign.com/api/v2/components.json",
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = json.loads(r.read())
+        for c in data.get("components", []):
+            if c.get("group_id"):
+                continue
+            name = c.get("name", "").lower()
+            if name == "esignature":
+                result["docusign_esignature"] = STATUS_MAP.get(c.get("status", "operational"), _default)
+            elif "third party" in name:
+                result["docusign_thirdparty"] = STATUS_MAP.get(c.get("status", "operational"), _default)
+    except Exception as e:
+        _log_error("docusign_status", e)
+    return result
 
 
 _SNOWFLAKE_US_KEYWORDS = [" us", "govcloud"]
@@ -1311,7 +1353,7 @@ def index():
 
 def _build_status():
     """Core status computation — called by the API and the cache warmer."""
-    with ThreadPoolExecutor(max_workers=14) as ex:
+    with ThreadPoolExecutor(max_workers=16) as ex:
         f_slack   = ex.submit(lambda: _cached("slack_st",    120, fetch_slack_status))
         f_ls      = ex.submit(lambda: _cached("ls_st",       120, fetch_leadsquared_status))
         f_jira    = ex.submit(lambda: _cached("jira_st",     120, fetch_jira_status))
@@ -1320,6 +1362,7 @@ def _build_status():
         f_canvas    = ex.submit(lambda: _cached("canvas_st",     120, fetch_canvas_status))
         f_snowflake = ex.submit(lambda: _cached("snowflake_st",  120, fetch_snowflake_status))
         f_checkr    = ex.submit(lambda: _cached("checkr_st",     120, fetch_checkr_status))
+        f_docusign  = ex.submit(lambda: _cached("docusign_st",   120, fetch_docusign_status))
         f_slack_h = ex.submit(lambda: _cached("slack_h",     300, get_slack_hourly_uptime))
         f_ls_h    = ex.submit(lambda: _cached("ls_h",        300, lambda: get_statuspage_hourly_uptime("https://status.leadsquared.com/api/v2/incidents.json")))
         f_jira_h  = ex.submit(lambda: _cached("jira_h",      300, lambda: get_statuspage_hourly_uptime("https://jira-service-management.status.atlassian.com/api/v2/incidents.json")))
@@ -1328,6 +1371,7 @@ def _build_status():
         f_canvas_h   = ex.submit(lambda: _cached("canvas_h",   300, lambda: get_statuspage_hourly_uptime("https://status.instructure.com/api/v2/incidents.json")))
         f_snowflake_h = ex.submit(lambda: _cached("snowflake_h", 300, lambda: get_statuspage_hourly_uptime("https://status.snowflake.com/api/v2/incidents.json", _snowflake_us_incident)))
         f_checkr_h    = ex.submit(lambda: _cached("checkr_h",    300, lambda: get_statuspage_hourly_uptime("https://checkrstatus.com/api/v2/incidents.json")))
+        f_docusign_h  = ex.submit(lambda: _cached("docusign_h",  300, lambda: get_statuspage_hourly_uptime("https://status.docusign.com/api/v2/incidents.json")))
 
     slack_st        = f_slack.result()
     leadsquared_st  = f_ls.result()
@@ -1337,6 +1381,7 @@ def _build_status():
     canvas_st       = f_canvas.result()
     snowflake_st    = f_snowflake.result()
     checkr_st       = f_checkr.result()
+    docusign_st     = f_docusign.result()  # dict: docusign_esignature, docusign_thirdparty
 
     gh_hourly     = f_gh_h.result()
     sinch_hourly  = f_sinch_h.result()
@@ -1352,6 +1397,9 @@ def _build_status():
         canvas_st[key]["uptime_24h"] = uptime_pct_from_hourly(canvas_hourly)
     snowflake_st["uptime_24h"] = uptime_pct_from_hourly(f_snowflake_h.result())
     checkr_st["uptime_24h"]    = uptime_pct_from_hourly(f_checkr_h.result())
+    docusign_hourly_data = f_docusign_h.result()
+    for key in docusign_st:
+        docusign_st[key]["uptime_24h"] = uptime_pct_from_hourly(docusign_hourly_data)
 
     status = {
         "slack":                 slack_st,
@@ -1372,6 +1420,8 @@ def _build_status():
         "canvas_studio":         canvas_st["canvas_studio"],
         "snowflake":             snowflake_st,
         "checkr":                checkr_st,
+        "docusign_esignature":   docusign_st["docusign_esignature"],
+        "docusign_thirdparty":   docusign_st["docusign_thirdparty"],
     }
 
     # Batch all uptime from DB (including Optimus — no longer using App Insights for %)
@@ -1437,11 +1487,13 @@ def _build_hourly():
         f_canvas    = ex.submit(lambda: _cached("canvas_h",     300, lambda: get_statuspage_hourly_uptime("https://status.instructure.com/api/v2/incidents.json")))
         f_snowflake = ex.submit(lambda: _cached("snowflake_h",  300, lambda: get_statuspage_hourly_uptime("https://status.snowflake.com/api/v2/incidents.json", _snowflake_us_incident)))
         f_checkr    = ex.submit(lambda: _cached("checkr_h",     300, lambda: get_statuspage_hourly_uptime("https://checkrstatus.com/api/v2/incidents.json")))
+        f_docusign  = ex.submit(lambda: _cached("docusign_h",   300, lambda: get_statuspage_hourly_uptime("https://status.docusign.com/api/v2/incidents.json")))
     gh_hourly        = f_gh.result()
     sinch_hourly     = f_sinch.result()
     canvas_hourly    = f_canvas.result()
-    snowflake_hourly = f_snowflake.result()
-    checkr_hourly    = f_checkr.result()
+    snowflake_hourly  = f_snowflake.result()
+    checkr_hourly     = f_checkr.result()
+    docusign_hourly   = f_docusign.result()
     return {
         "optimus":               db_hourly["optimus"],
         "imap":                  db_hourly["imap"],
@@ -1470,6 +1522,8 @@ def _build_hourly():
         "canvas_studio":         canvas_hourly,
         "snowflake":             snowflake_hourly,
         "checkr":                checkr_hourly,
+        "docusign_esignature":   docusign_hourly,
+        "docusign_thirdparty":   docusign_hourly,
         "school_aviation":       db_hourly["school_aviation"],
         "school_centura":        db_hourly["school_centura"],
         "school_tidewater":      db_hourly["school_tidewater"],
@@ -1576,6 +1630,7 @@ def api_third_party_incidents():
         ("Instructure (Canvas)",   "https://status.instructure.com/api/v2/incidents.json"),
         ("Snowflake",              "https://status.snowflake.com/api/v2/incidents.json"),
         ("Checkr",                 "https://checkrstatus.com/api/v2/incidents.json"),
+        ("DocuSign",               "https://status.docusign.com/api/v2/incidents.json"),
     ]
 
     _sp_filters = {"Snowflake": _snowflake_us_incident}

@@ -603,6 +603,26 @@
       </tr>
     </table>
 
+    <!-- DocuSign -->
+    <table class="feature-table" style="margin-top:8px;">
+      <tr id="row-docusign_esignature">
+        <td class="feature-name">
+          DocuSign eSignature
+        </td>
+        <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+        <td class="feature-uptime">—</td>
+        <td class="uptime-col"><div class="mini-bar" id="b-docusign_esignature"></div></td>
+      </tr>
+      <tr id="row-docusign_thirdparty">
+        <td class="feature-name" style="padding-left:1.5rem;font-size:13px;color:var(--muted);">
+          ↳ Third Party Services
+        </td>
+        <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+        <td class="feature-uptime">—</td>
+        <td class="uptime-col"><div class="mini-bar" id="b-docusign_thirdparty"></div></td>
+      </tr>
+    </table>
+
     <!-- LeadSquared -->
     <table class="feature-table" style="margin-top:8px;">
       <tr id="row-leadsquared">
@@ -638,6 +658,8 @@
       <a href="https://status.snowflake.com" target="_blank" style="color:var(--teal);text-decoration:none;">Snowflake Status ↗</a>
       &nbsp;·&nbsp;
       <a href="https://checkrstatus.com" target="_blank" style="color:var(--teal);text-decoration:none;">Checkr Status ↗</a>
+      &nbsp;·&nbsp;
+      <a href="https://status.docusign.com" target="_blank" style="color:var(--teal);text-decoration:none;">DocuSign Status ↗</a>
     </div>
   </div>
 
@@ -701,6 +723,8 @@
               <option value="Greenhouse">Greenhouse</option>
               <option value="Snowflake">Snowflake</option>
               <option value="Checkr">Checkr</option>
+              <option value="DocuSign eSignature">DocuSign eSignature</option>
+              <option value="DocuSign Third Party Services">DocuSign — Third Party Services</option>
               <option value="LeadSquared">LeadSquared</option>
             </optgroup>
           </select>
@@ -802,7 +826,9 @@
       const canvas_mobile      = data.canvas_mobile      || {};
       const canvas_studio      = data.canvas_studio      || {};
       const snowflake          = data.snowflake          || {};
-      const checkr             = data.checkr             || {};
+      const checkr                 = data.checkr                 || {};
+      const docusign_esignature    = data.docusign_esignature    || {};
+      const docusign_thirdparty    = data.docusign_thirdparty    || {};
       const school_aviation  = data.school_aviation  || {};
       const school_centura   = data.school_centura   || {};
       const school_tidewater = data.school_tidewater || {};
@@ -841,7 +867,9 @@
       buildHourlyBar('b-canvas-mobile',      canvas_mobile);
       buildHourlyBar('b-canvas-studio',      canvas_studio);
       buildHourlyBar('b-snowflake',          snowflake);
-      buildHourlyBar('b-checkr',             checkr);
+      buildHourlyBar('b-checkr',                 checkr);
+      buildHourlyBar('b-docusign_esignature',    docusign_esignature);
+      buildHourlyBar('b-docusign_thirdparty',    docusign_thirdparty);
       buildHourlyBar('b-school-aviation',  school_aviation);
       buildHourlyBar('b-school-centura',   school_centura);
       buildHourlyBar('b-school-tidewater', school_tidewater);
@@ -859,7 +887,7 @@
        'b-greenhouse-website','b-greenhouse-recruiting','b-greenhouse-harvest','b-greenhouse-jobboards',
        'b-sinch','b-sinch-connectivity','b-sinch-contactpro','b-sinch-campaigns','b-sinch-chatalayer',
        'b-instructure','b-canvas-lms','b-canvas-mobile','b-canvas-studio',
-       'b-snowflake','b-checkr',
+       'b-snowflake','b-checkr','b-docusign_esignature','b-docusign_thirdparty',
        'b-school-aviation','b-school-centura','b-school-tidewater',
        'b-aim-admissions','b-aim-campuses','b-aim-programs','b-aim-resources','b-aim-about'].forEach(buildNoDataBar);
     });
@@ -932,7 +960,9 @@
         if (data.canvas_mobile)      updateIndicator('row-canvas-mobile',      data.canvas_mobile);
         if (data.canvas_studio)      updateIndicator('row-canvas-studio',      data.canvas_studio);
         if (data.snowflake)          updateIndicator('row-snowflake',           data.snowflake);
-        if (data.checkr)             updateIndicator('row-checkr',              data.checkr);
+        if (data.checkr)                 updateIndicator('row-checkr',                  data.checkr);
+        if (data.docusign_esignature)    updateIndicator('row-docusign_esignature',     data.docusign_esignature);
+        if (data.docusign_thirdparty)    updateIndicator('row-docusign_thirdparty',     data.docusign_thirdparty);
         if (data.optimus)        updateIndicator('row-opt-web', data.optimus);
         if (data.leadsquared) {
           updateIndicator('row-leadsquared', data.leadsquared);
