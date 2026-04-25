@@ -214,10 +214,27 @@ _TP_LABELS = {
     "tp_canvas_studio":         "Canvas Studio",
     "tp_snowflake":             "Snowflake",
     "tp_checkr":                "Checkr",
-    "tp_docusign_esignature":   "DocuSign eSignature",
-    "tp_docusign_thirdparty":   "DocuSign — Third Party Services",
+    "tp_docusign":                  "DocuSign",
+    "tp_docusign_esignature":       "DocuSign eSignature",
+    "tp_docusign_thirdparty":       "DocuSign — Third Party Services",
+    "tp_smartsheet":                "Smartsheet",
+    "tp_tableau":                   "Tableau (Americas)",
+    "tp_parchment":                 "Parchment",
+    "tp_parchment_transcript":      "Parchment Award — Transcript Services",
+    "tp_parchment_diploma":         "Parchment Award — Diploma, Certificate, Badge, CLR",
+    "tp_parchment_integrations":    "Parchment — Integrations",
+    "tp_parchment_print":           "Parchment — Print",
 }
 
+# Sub-component keys that update AlertState but do NOT fire independent Slack alerts.
+# Their parent key (tp_sinch, tp_canvas, etc.) already covers the overall service status.
+_ALERT_PARENT_ONLY = frozenset({
+    "tp_sinch_connectivity", "tp_sinch_contactpro", "tp_sinch_campaigns", "tp_sinch_chatalayer",
+    "tp_canvas_lms", "tp_canvas_mobile", "tp_canvas_studio",
+    "tp_greenhouse_recruiting", "tp_greenhouse_harvest", "tp_greenhouse_jobboards",
+    "tp_docusign_esignature", "tp_docusign_thirdparty",
+    "tp_parchment_transcript", "tp_parchment_diploma", "tp_parchment_integrations", "tp_parchment_print",
+})
 
 
 def _status_page_url():
@@ -328,6 +345,19 @@ def run_third_party_alerts():
                 checks[f"tp_{sub}"] = status
         except Exception:
             pass
+        try:
+            for sub, status in fetch_parchment_status().items():
+                checks[f"tp_{sub}"] = status
+        except Exception:
+            pass
+        try:
+            checks["tp_smartsheet"] = fetch_smartsheet_status()
+        except Exception:
+            pass
+        try:
+            checks["tp_tableau"] = fetch_tableau_status()
+        except Exception:
+            pass
 
         for key, result in checks.items():
             is_down = result["status"] not in ("operational", "unknown")
@@ -339,6 +369,11 @@ def run_third_party_alerts():
 
             label = _TP_LABELS.get(key, key.replace("tp_", "").replace("_", " ").title())
             url   = _status_page_url()
+            # Sub-components track state in DB but don't fire independent alerts —
+            # the parent key (e.g. tp_sinch) already covers the overall status.
+            if key in _ALERT_PARENT_ONLY:
+                state.in_alert = is_down
+                continue
             if is_down and not state.in_alert:
                 state.in_alert  = True
                 state.alerted_at = datetime.now(timezone.utc)
@@ -364,13 +399,17 @@ def run_third_party_alerts():
             ("Snowflake",               "https://status.snowflake.com/api/v2/incidents.json"),
             ("Checkr",                  "https://checkrstatus.com/api/v2/incidents.json"),
             ("DocuSign",                "https://status.docusign.com/api/v2/incidents.json"),
+            ("Parchment",               "https://status.parchment.com/api/v2/incidents.json"),
+            ("Smartsheet",              "https://status.smartsheet.com/api/v2/incidents.json"),
         ]
         try:
             _sp_filters = {"Snowflake": _snowflake_us_incident}
-            with ThreadPoolExecutor(max_workers=10) as ex:
-                f_slk = ex.submit(_fetch_slack_incidents, inc_cutoff)
+            with ThreadPoolExecutor(max_workers=12) as ex:
+                f_slk     = ex.submit(_fetch_slack_incidents, inc_cutoff)
+                f_tableau = ex.submit(_fetch_tableau_na_incidents, inc_cutoff)
                 sp_fts = [ex.submit(_fetch_statuspage_incidents, name, u, inc_cutoff, _sp_filters.get(name)) for name, u in sp_sources]
             inc_results = f_slk.result()
+            inc_results.extend(f_tableau.result())
             for f in sp_fts:
                 inc_results.extend(f.result())
             sev_emoji = {"outage": "🔴", "major": "🔴", "minor": "⚠️", "none": "✅", "critical": "🔴"}
@@ -748,7 +787,7 @@ def fetch_checkr_status():
 
 
 def fetch_docusign_status():
-    """Return status for DocuSign eSignature and Third Party Services components."""
+    """Return overall + sub-service status for DocuSign eSignature and Third Party Services."""
     STATUS_MAP = {
         "operational":          {"status": "operational", "label": "Operational"},
         "degraded_performance": {"status": "degraded",    "label": "Degraded"},
@@ -756,8 +795,9 @@ def fetch_docusign_status():
         "partial_outage":       {"status": "partial",     "label": "Partial Outage"},
         "major_outage":         {"status": "outage",      "label": "Major Outage"},
     }
+    STATUS_ORDER = ["major_outage", "partial_outage", "degraded_performance", "under_maintenance", "operational"]
     _default = {"status": "unknown", "label": "Unknown"}
-    result = {
+    subs = {
         "docusign_esignature":   dict(_default),
         "docusign_thirdparty":   dict(_default),
     }
@@ -773,12 +813,231 @@ def fetch_docusign_status():
                 continue
             name = c.get("name", "").lower()
             if name == "esignature":
-                result["docusign_esignature"] = STATUS_MAP.get(c.get("status", "operational"), _default)
+                subs["docusign_esignature"] = STATUS_MAP.get(c.get("status", "operational"), _default)
             elif "third party" in name:
-                result["docusign_thirdparty"] = STATUS_MAP.get(c.get("status", "operational"), _default)
+                subs["docusign_thirdparty"] = STATUS_MAP.get(c.get("status", "operational"), _default)
+        worst = "operational"
+        for sub in subs.values():
+            s = next((k for k, v in STATUS_MAP.items() if v == sub), None)
+            if s and s in STATUS_ORDER and STATUS_ORDER.index(s) < STATUS_ORDER.index(worst):
+                worst = s
+        overall = STATUS_MAP.get(worst, _default)
     except Exception as e:
         _log_error("docusign_status", e)
-    return result
+        overall = dict(_default)
+    return {"docusign": overall, **subs}
+
+
+def fetch_parchment_status():
+    """Return overall and sub-service status for Parchment based on four tracked components."""
+    STATUS_MAP = {
+        "operational":          {"status": "operational", "label": "Operational"},
+        "degraded_performance": {"status": "degraded",    "label": "Degraded"},
+        "under_maintenance":    {"status": "degraded",    "label": "Under Maintenance"},
+        "partial_outage":       {"status": "partial",     "label": "Partial Outage"},
+        "major_outage":         {"status": "outage",      "label": "Major Outage"},
+    }
+    STATUS_ORDER = ["major_outage", "partial_outage", "degraded_performance", "under_maintenance", "operational"]
+    _default = {"status": "unknown", "label": "Unknown"}
+    subs = {
+        "parchment_transcript":   dict(_default),
+        "parchment_diploma":      dict(_default),
+        "parchment_integrations": dict(_default),
+        "parchment_print":        dict(_default),
+    }
+    try:
+        req = urllib.request.Request(
+            "https://status.parchment.com/api/v2/components.json",
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = json.loads(r.read())
+        for c in data.get("components", []):
+            name = c.get("name", "")
+            s = c.get("status", "operational")
+            mapped = STATUS_MAP.get(s, _default)
+            if not c.get("group_id"):
+                if name == "Parchment Award - Transcript Services":
+                    subs["parchment_transcript"] = mapped
+                elif name == "Parchment Award - Diploma, Certificate, Badge, CLR":
+                    subs["parchment_diploma"] = mapped
+                elif name == "Integrations":
+                    subs["parchment_integrations"] = mapped
+            if name == "Parchment Print":
+                subs["parchment_print"] = mapped
+        # Overall = worst of the four tracked sub-services
+        worst = "operational"
+        for sub in subs.values():
+            s = next((k for k, v in STATUS_MAP.items() if v == sub), None)
+            if s and s in STATUS_ORDER and STATUS_ORDER.index(s) < STATUS_ORDER.index(worst):
+                worst = s
+        overall = STATUS_MAP.get(worst, _default)
+    except Exception as e:
+        _log_error("parchment_status", e)
+        overall = dict(_default)
+    return {"parchment": overall, **subs}
+
+
+def fetch_smartsheet_status():
+    """Return Smartsheet Core Application status."""
+    STATUS_MAP = {
+        "operational":          {"status": "operational", "label": "Operational"},
+        "degraded_performance": {"status": "degraded",    "label": "Degraded"},
+        "under_maintenance":    {"status": "degraded",    "label": "Under Maintenance"},
+        "partial_outage":       {"status": "partial",     "label": "Partial Outage"},
+        "major_outage":         {"status": "outage",      "label": "Major Outage"},
+    }
+    try:
+        req = urllib.request.Request(
+            "https://status.smartsheet.com/api/v2/components.json",
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = json.loads(r.read())
+        for c in data.get("components", []):
+            if not c.get("group_id") and c.get("name", "").lower() == "core application":
+                return STATUS_MAP.get(c.get("status", "operational"), {"status": "unknown", "label": "Unknown"})
+        return {"status": "unknown", "label": "Unknown"}
+    except Exception as e:
+        _log_error("smartsheet_status", e)
+        return {"status": "unknown", "label": "Unknown"}
+
+
+# Tableau (Americas) — Salesforce Trust API
+_TABLEAU_NA_INSTANCES = frozenset([
+    "10AYPD", "10AZPD", "PDCAAA", "PDPUWAA", "PDUEAA",
+    "PDUEBA", "PDUECA", "PDUWCA", "UE1PD", "UW2BPD",
+    "TABLEAUSELFSERVICEPORTALS",
+])
+_TABLEAU_STATUS_MAP = {
+    "OK":                     {"status": "operational", "label": "Operational"},
+    "MAINTENANCE":            {"status": "degraded",    "label": "Under Maintenance"},
+    "MINOR_INCIDENT_NONCORE": {"status": "degraded",    "label": "Degraded (Non-core)"},
+    "MINOR_INCIDENT_CORE":    {"status": "degraded",    "label": "Degraded"},
+    "MAJOR_INCIDENT_NONCORE": {"status": "partial",     "label": "Partial Outage"},
+    "MAJOR_INCIDENT_CORE":    {"status": "outage",      "label": "Major Outage"},
+}
+_TABLEAU_STATUS_ORDER = [
+    "MAJOR_INCIDENT_CORE", "MAJOR_INCIDENT_NONCORE",
+    "MINOR_INCIDENT_CORE", "MINOR_INCIDENT_NONCORE",
+    "MAINTENANCE", "OK",
+]
+
+def fetch_tableau_status():
+    """Return worst Tableau status across all NA instances."""
+    try:
+        req = urllib.request.Request(
+            "https://api.status.salesforce.com/v1/instances?products=Tableau",
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        with urllib.request.urlopen(req, timeout=15) as r:
+            instances = json.loads(r.read())
+        worst = "OK"
+        for inst in instances:
+            if inst.get("location") != "NA" or not inst.get("isActive"):
+                continue
+            s = inst.get("status", "OK")
+            if s in _TABLEAU_STATUS_ORDER and _TABLEAU_STATUS_ORDER.index(s) < _TABLEAU_STATUS_ORDER.index(worst):
+                worst = s
+        return _TABLEAU_STATUS_MAP.get(worst, {"status": "unknown", "label": "Unknown"})
+    except Exception as e:
+        _log_error("tableau_status", e)
+        return {"status": "unknown", "label": "Unknown"}
+
+
+def get_tableau_na_hourly_uptime():
+    """Build 24h hourly uptime slots for Tableau Americas using the incidents API."""
+    try:
+        req = urllib.request.Request(
+            "https://api.status.salesforce.com/v1/incidents?products=Tableau",
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        with urllib.request.urlopen(req, timeout=20) as r:
+            incidents = json.loads(r.read())
+        now = datetime.now(timezone.utc)
+        cutoff = now - timedelta(hours=24)
+        hourly = _build_24h_slots()
+        for inc in incidents:
+            if not any(k in _TABLEAU_NA_INSTANCES for k in inc.get("instanceKeys", [])):
+                continue
+            for impact in inc.get("IncidentImpacts", []):
+                start_str = impact.get("startTime", "")
+                end_str = impact.get("endTime", "")
+                if not start_str:
+                    continue
+                try:
+                    start = datetime.fromisoformat(start_str.replace("Z", "+00:00")).astimezone(timezone.utc)
+                    end = datetime.fromisoformat(end_str.replace("Z", "+00:00")).astimezone(timezone.utc) if end_str else now
+                except Exception:
+                    continue
+                if end < cutoff or start > now:
+                    continue
+                severity = impact.get("severity", "minor")
+                degraded_pct = 0 if severity in ("critical", "major") else 50
+                for hour_key, pct in hourly.items():
+                    hour_dt = datetime.strptime(hour_key, "%Y-%m-%dT%H").replace(tzinfo=timezone.utc)
+                    if start < hour_dt + timedelta(hours=1) and end > hour_dt:
+                        hourly[hour_key] = min(pct, degraded_pct)
+        return hourly
+    except Exception as e:
+        _log_error("tableau_hourly", e)
+        return {}
+
+
+def _fetch_tableau_na_incidents(cutoff):
+    """Fetch Tableau Americas incidents for the rolling incident feed."""
+    items = []
+    try:
+        req = urllib.request.Request(
+            "https://api.status.salesforce.com/v1/incidents?products=Tableau",
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        with urllib.request.urlopen(req, timeout=20) as r:
+            incidents = json.loads(r.read())
+        for inc in incidents:
+            if not any(k in _TABLEAU_NA_INSTANCES for k in inc.get("instanceKeys", [])):
+                continue
+            impacts = inc.get("IncidentImpacts", [])
+            if not impacts:
+                continue
+            start_strs = [imp["startTime"] for imp in impacts if imp.get("startTime")]
+            end_strs   = [imp["endTime"]   for imp in impacts if imp.get("endTime")]
+            if not start_strs:
+                continue
+            try:
+                start = min(
+                    datetime.fromisoformat(s.replace("Z", "+00:00")).astimezone(timezone.utc)
+                    for s in start_strs
+                )
+                end = max(
+                    datetime.fromisoformat(s.replace("Z", "+00:00")).astimezone(timezone.utc)
+                    for s in end_strs
+                ) if end_strs else None
+            except Exception:
+                continue
+            if end and end < cutoff:
+                continue
+            severity = max(
+                (imp.get("severity", "minor") for imp in impacts),
+                key=lambda s: ["critical", "major", "minor"].index(s) if s in ["critical", "major", "minor"] else 99,
+                default="minor",
+            )
+            events = inc.get("IncidentEvents", [])
+            title = (events[0].get("message", "") if events else "") or f"Tableau {inc.get('type', 'Incident')}"
+            if len(title) > 120:
+                title = title[:120] + "…"
+            items.append({
+                "service": "Tableau (Americas)",
+                "title": title,
+                "status": "resolved" if inc.get("status") == "Resolved" else "active",
+                "impact": severity,
+                "started_at": start.strftime("%b %d, %Y %-I:%M %p UTC"),
+                "resolved_at": end.strftime("%b %d, %Y %-I:%M %p UTC") if end else None,
+                "sort_key": start.isoformat(),
+            })
+    except Exception as e:
+        _log_error("tableau_incidents", e)
+    return items
 
 
 _SNOWFLAKE_US_KEYWORDS = [" us", "govcloud"]
@@ -1353,7 +1612,7 @@ def index():
 
 def _build_status():
     """Core status computation — called by the API and the cache warmer."""
-    with ThreadPoolExecutor(max_workers=16) as ex:
+    with ThreadPoolExecutor(max_workers=22) as ex:
         f_slack   = ex.submit(lambda: _cached("slack_st",    120, fetch_slack_status))
         f_ls      = ex.submit(lambda: _cached("ls_st",       120, fetch_leadsquared_status))
         f_jira    = ex.submit(lambda: _cached("jira_st",     120, fetch_jira_status))
@@ -1362,7 +1621,10 @@ def _build_status():
         f_canvas    = ex.submit(lambda: _cached("canvas_st",     120, fetch_canvas_status))
         f_snowflake = ex.submit(lambda: _cached("snowflake_st",  120, fetch_snowflake_status))
         f_checkr    = ex.submit(lambda: _cached("checkr_st",     120, fetch_checkr_status))
-        f_docusign  = ex.submit(lambda: _cached("docusign_st",   120, fetch_docusign_status))
+        f_docusign   = ex.submit(lambda: _cached("docusign_st",    120, fetch_docusign_status))
+        f_parchment  = ex.submit(lambda: _cached("parchment_st",  120, fetch_parchment_status))
+        f_smartsheet = ex.submit(lambda: _cached("smartsheet_st", 120, fetch_smartsheet_status))
+        f_tableau    = ex.submit(lambda: _cached("tableau_st",    120, fetch_tableau_status))
         f_slack_h = ex.submit(lambda: _cached("slack_h",     300, get_slack_hourly_uptime))
         f_ls_h    = ex.submit(lambda: _cached("ls_h",        300, lambda: get_statuspage_hourly_uptime("https://status.leadsquared.com/api/v2/incidents.json")))
         f_jira_h  = ex.submit(lambda: _cached("jira_h",      300, lambda: get_statuspage_hourly_uptime("https://jira-service-management.status.atlassian.com/api/v2/incidents.json")))
@@ -1371,7 +1633,10 @@ def _build_status():
         f_canvas_h   = ex.submit(lambda: _cached("canvas_h",   300, lambda: get_statuspage_hourly_uptime("https://status.instructure.com/api/v2/incidents.json")))
         f_snowflake_h = ex.submit(lambda: _cached("snowflake_h", 300, lambda: get_statuspage_hourly_uptime("https://status.snowflake.com/api/v2/incidents.json", _snowflake_us_incident)))
         f_checkr_h    = ex.submit(lambda: _cached("checkr_h",    300, lambda: get_statuspage_hourly_uptime("https://checkrstatus.com/api/v2/incidents.json")))
-        f_docusign_h  = ex.submit(lambda: _cached("docusign_h",  300, lambda: get_statuspage_hourly_uptime("https://status.docusign.com/api/v2/incidents.json")))
+        f_docusign_h   = ex.submit(lambda: _cached("docusign_h",   300, lambda: get_statuspage_hourly_uptime("https://status.docusign.com/api/v2/incidents.json")))
+        f_parchment_h  = ex.submit(lambda: _cached("parchment_h",  300, lambda: get_statuspage_hourly_uptime("https://status.parchment.com/api/v2/incidents.json")))
+        f_smartsheet_h = ex.submit(lambda: _cached("smartsheet_h", 300, lambda: get_statuspage_hourly_uptime("https://status.smartsheet.com/api/v2/incidents.json")))
+        f_tableau_h    = ex.submit(lambda: _cached("tableau_h",    300, get_tableau_na_hourly_uptime))
 
     slack_st        = f_slack.result()
     leadsquared_st  = f_ls.result()
@@ -1381,7 +1646,10 @@ def _build_status():
     canvas_st       = f_canvas.result()
     snowflake_st    = f_snowflake.result()
     checkr_st       = f_checkr.result()
-    docusign_st     = f_docusign.result()  # dict: docusign_esignature, docusign_thirdparty
+    docusign_st     = f_docusign.result()   # dict: docusign_esignature, docusign_thirdparty
+    parchment_st    = f_parchment.result()  # dict: parchment, parchment_transcript, parchment_diploma, parchment_integrations, parchment_print
+    smartsheet_st   = f_smartsheet.result()
+    tableau_st      = f_tableau.result()
 
     gh_hourly     = f_gh_h.result()
     sinch_hourly  = f_sinch_h.result()
@@ -1397,9 +1665,15 @@ def _build_status():
         canvas_st[key]["uptime_24h"] = uptime_pct_from_hourly(canvas_hourly)
     snowflake_st["uptime_24h"] = uptime_pct_from_hourly(f_snowflake_h.result())
     checkr_st["uptime_24h"]    = uptime_pct_from_hourly(f_checkr_h.result())
-    docusign_hourly_data = f_docusign_h.result()
+    docusign_hourly_data  = f_docusign_h.result()
+    docusign_uptime = uptime_pct_from_hourly(docusign_hourly_data)
     for key in docusign_st:
-        docusign_st[key]["uptime_24h"] = uptime_pct_from_hourly(docusign_hourly_data)
+        docusign_st[key]["uptime_24h"] = docusign_uptime
+    parchment_hourly_data = f_parchment_h.result()
+    for key in parchment_st:
+        parchment_st[key]["uptime_24h"] = uptime_pct_from_hourly(parchment_hourly_data)
+    smartsheet_st["uptime_24h"] = uptime_pct_from_hourly(f_smartsheet_h.result())
+    tableau_st["uptime_24h"]    = uptime_pct_from_hourly(f_tableau_h.result())
 
     status = {
         "slack":                 slack_st,
@@ -1420,8 +1694,16 @@ def _build_status():
         "canvas_studio":         canvas_st["canvas_studio"],
         "snowflake":             snowflake_st,
         "checkr":                checkr_st,
-        "docusign_esignature":   docusign_st["docusign_esignature"],
-        "docusign_thirdparty":   docusign_st["docusign_thirdparty"],
+        "docusign":                  docusign_st["docusign"],
+        "docusign_esignature":       docusign_st["docusign_esignature"],
+        "docusign_thirdparty":       docusign_st["docusign_thirdparty"],
+        "smartsheet":                smartsheet_st,
+        "tableau":                   tableau_st,
+        "parchment":                 parchment_st["parchment"],
+        "parchment_transcript":      parchment_st["parchment_transcript"],
+        "parchment_diploma":         parchment_st["parchment_diploma"],
+        "parchment_integrations":    parchment_st["parchment_integrations"],
+        "parchment_print":           parchment_st["parchment_print"],
     }
 
     # Batch all uptime from DB (including Optimus — no longer using App Insights for %)
@@ -1487,13 +1769,19 @@ def _build_hourly():
         f_canvas    = ex.submit(lambda: _cached("canvas_h",     300, lambda: get_statuspage_hourly_uptime("https://status.instructure.com/api/v2/incidents.json")))
         f_snowflake = ex.submit(lambda: _cached("snowflake_h",  300, lambda: get_statuspage_hourly_uptime("https://status.snowflake.com/api/v2/incidents.json", _snowflake_us_incident)))
         f_checkr    = ex.submit(lambda: _cached("checkr_h",     300, lambda: get_statuspage_hourly_uptime("https://checkrstatus.com/api/v2/incidents.json")))
-        f_docusign  = ex.submit(lambda: _cached("docusign_h",   300, lambda: get_statuspage_hourly_uptime("https://status.docusign.com/api/v2/incidents.json")))
+        f_docusign   = ex.submit(lambda: _cached("docusign_h",   300, lambda: get_statuspage_hourly_uptime("https://status.docusign.com/api/v2/incidents.json")))
+        f_parchment  = ex.submit(lambda: _cached("parchment_h",  300, lambda: get_statuspage_hourly_uptime("https://status.parchment.com/api/v2/incidents.json")))
+        f_smartsheet = ex.submit(lambda: _cached("smartsheet_h", 300, lambda: get_statuspage_hourly_uptime("https://status.smartsheet.com/api/v2/incidents.json")))
+        f_tableau    = ex.submit(lambda: _cached("tableau_h",    300, get_tableau_na_hourly_uptime))
     gh_hourly        = f_gh.result()
     sinch_hourly     = f_sinch.result()
     canvas_hourly    = f_canvas.result()
     snowflake_hourly  = f_snowflake.result()
     checkr_hourly     = f_checkr.result()
     docusign_hourly   = f_docusign.result()
+    parchment_hourly  = f_parchment.result()
+    smartsheet_hourly = f_smartsheet.result()
+    tableau_hourly    = f_tableau.result()
     return {
         "optimus":               db_hourly["optimus"],
         "imap":                  db_hourly["imap"],
@@ -1522,8 +1810,16 @@ def _build_hourly():
         "canvas_studio":         canvas_hourly,
         "snowflake":             snowflake_hourly,
         "checkr":                checkr_hourly,
-        "docusign_esignature":   docusign_hourly,
-        "docusign_thirdparty":   docusign_hourly,
+        "docusign":                  docusign_hourly,
+        "docusign_esignature":       docusign_hourly,
+        "docusign_thirdparty":       docusign_hourly,
+        "smartsheet":                smartsheet_hourly,
+        "tableau":                   tableau_hourly,
+        "parchment":                 parchment_hourly,
+        "parchment_transcript":      parchment_hourly,
+        "parchment_diploma":         parchment_hourly,
+        "parchment_integrations":    parchment_hourly,
+        "parchment_print":           parchment_hourly,
         "school_aviation":       db_hourly["school_aviation"],
         "school_centura":        db_hourly["school_centura"],
         "school_tidewater":      db_hourly["school_tidewater"],
@@ -1631,14 +1927,18 @@ def api_third_party_incidents():
         ("Snowflake",              "https://status.snowflake.com/api/v2/incidents.json"),
         ("Checkr",                 "https://checkrstatus.com/api/v2/incidents.json"),
         ("DocuSign",               "https://status.docusign.com/api/v2/incidents.json"),
+        ("Parchment",              "https://status.parchment.com/api/v2/incidents.json"),
+        ("Smartsheet",             "https://status.smartsheet.com/api/v2/incidents.json"),
     ]
 
     _sp_filters = {"Snowflake": _snowflake_us_incident}
-    with ThreadPoolExecutor(max_workers=10) as ex:
-        f_slack = ex.submit(_fetch_slack_incidents, cutoff)
+    with ThreadPoolExecutor(max_workers=12) as ex:
+        f_slack   = ex.submit(_fetch_slack_incidents, cutoff)
+        f_tableau = ex.submit(_fetch_tableau_na_incidents, cutoff)
         sp_futures = [ex.submit(_fetch_statuspage_incidents, name, url, cutoff, _sp_filters.get(name)) for name, url in statuspage_sources]
 
     results = f_slack.result()
+    results.extend(f_tableau.result())
     for f in sp_futures:
         results.extend(f.result())
 

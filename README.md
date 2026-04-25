@@ -138,6 +138,26 @@ Features:
 
 ---
 
+## Bug Fixes & Changes — April 24, 2026
+
+### New Third-Party Services
+- Added **DocuSign** — parent row with drill-down showing eSignature and Third Party Services sub-components
+- Added **Parchment** — parent row with drill-down showing Transcript Services, Diploma/Certificate/Badge/CLR, Integrations, and Print sub-components
+- Added **Smartsheet** — Core Application status from `status.smartsheet.com`
+- Added **Tableau (Americas)** — NA instance status via Salesforce Trust API (`api.status.salesforce.com/v1/instances?products=Tableau`)
+- Added logos for DocuSign, Parchment, Smartsheet, and Tableau
+- Updated service order: Anthology → Canvas → Sinch → Slack → Jira → Greenhouse → Snowflake → Checkr → DocuSign → Parchment → Smartsheet → Tableau → LeadSquared
+
+### Alerting
+- **Fixed duplicate Slack notifications** — sub-component keys (Sinch sub-services, Canvas sub-services, Greenhouse sub-services, DocuSign sub-services, Parchment sub-services) no longer fire independent state-change alerts; only the parent key fires, preventing up to 5 simultaneous messages per outage
+- Added `_ALERT_PARENT_ONLY` frozenset to control which keys track state in DB without triggering Slack alerts
+- Wired DocuSign, Parchment, Smartsheet, and Tableau into `run_third_party_alerts()` for state-change and incident feed alerts
+
+### UI Fixes
+- Fixed LeadSquared sync detail panel showing white background in dark mode — now uses `var(--card)` theme variable
+
+---
+
 ## Sprint Work — April 23, 2026
 
 ### Status Page — UI Updates

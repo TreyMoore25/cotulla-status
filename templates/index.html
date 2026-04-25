@@ -605,21 +605,95 @@
 
     <!-- DocuSign -->
     <table class="feature-table" style="margin-top:8px;">
-      <tr id="row-docusign_esignature">
+      <tr id="row-docusign">
         <td class="feature-name">
-          DocuSign eSignature
+          <img src="{{ url_for('static', filename='docusign_logo.png') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;border-radius:3px;">DocuSign
+          <div><button class="drill-toggle" onclick="toggleDrill('docusign-drill')"><span class="drill-arrow" id="docusign-drill-arrow">▸</span> View details</button></div>
         </td>
         <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
         <td class="feature-uptime">—</td>
-        <td class="uptime-col"><div class="mini-bar" id="b-docusign_esignature"></div></td>
+        <td class="uptime-col"><div class="mini-bar" id="b-docusign"></div></td>
       </tr>
-      <tr id="row-docusign_thirdparty">
-        <td class="feature-name" style="padding-left:1.5rem;font-size:13px;color:var(--muted);">
-          ↳ Third Party Services
+    </table>
+    <div class="drill-details" id="docusign-drill">
+      <table class="feature-table" style="margin-top:4px;">
+        <tr id="row-docusign_esignature">
+          <td class="feature-name" style="padding-left:1.5rem;">eSignature</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-docusign_esignature"></div></td>
+        </tr>
+        <tr id="row-docusign_thirdparty">
+          <td class="feature-name" style="padding-left:1.5rem;">Third Party Services</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-docusign_thirdparty"></div></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Parchment -->
+    <table class="feature-table" style="margin-top:8px;">
+      <tr id="row-parchment">
+        <td class="feature-name">
+          <img src="{{ url_for('static', filename='parchment_logo.jpeg') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;border-radius:3px;">Parchment
+          <div><button class="drill-toggle" onclick="toggleDrill('parchment-drill')"><span class="drill-arrow" id="parchment-drill-arrow">▸</span> View details</button></div>
         </td>
         <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
         <td class="feature-uptime">—</td>
-        <td class="uptime-col"><div class="mini-bar" id="b-docusign_thirdparty"></div></td>
+        <td class="uptime-col"><div class="mini-bar" id="b-parchment"></div></td>
+      </tr>
+    </table>
+    <div class="drill-details" id="parchment-drill">
+      <table class="feature-table" style="margin-top:4px;">
+        <tr id="row-parchment_transcript">
+          <td class="feature-name" style="padding-left:1.5rem;">Award — Transcript Services</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-parchment_transcript"></div></td>
+        </tr>
+        <tr id="row-parchment_diploma">
+          <td class="feature-name" style="padding-left:1.5rem;">Award — Diploma, Certificate, Badge, CLR</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-parchment_diploma"></div></td>
+        </tr>
+        <tr id="row-parchment_integrations">
+          <td class="feature-name" style="padding-left:1.5rem;">Integrations</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-parchment_integrations"></div></td>
+        </tr>
+        <tr id="row-parchment_print">
+          <td class="feature-name" style="padding-left:1.5rem;">Parchment Print</td>
+          <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+          <td class="feature-uptime">—</td>
+          <td class="uptime-col"><div class="mini-bar" id="b-parchment_print"></div></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Smartsheet -->
+    <table class="feature-table" style="margin-top:8px;">
+      <tr id="row-smartsheet">
+        <td class="feature-name">
+          <img src="{{ url_for('static', filename='smartsheet_logo.png') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;border-radius:3px;">Smartsheet
+        </td>
+        <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+        <td class="feature-uptime">—</td>
+        <td class="uptime-col"><div class="mini-bar" id="b-smartsheet"></div></td>
+      </tr>
+    </table>
+
+    <!-- Tableau -->
+    <table class="feature-table" style="margin-top:8px;">
+      <tr id="row-tableau">
+        <td class="feature-name">
+          <img src="{{ url_for('static', filename='tableau_logo.png') }}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;border-radius:3px;">Tableau (Americas)
+        </td>
+        <td class="feature-status-cell"><div class="feature-status"><div class="sc sc-green"><span class="check">✓</span></div>Checking...</div></td>
+        <td class="feature-uptime">—</td>
+        <td class="uptime-col"><div class="mini-bar" id="b-tableau"></div></td>
       </tr>
     </table>
 
@@ -636,7 +710,7 @@
       </tr>
     </table>
     <div class="drill-details" id="ls-drill">
-      <div id="ls-detail" style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;margin-top:4px;font-size:13px;color:var(--muted);">
+      <div id="ls-detail" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;margin-top:4px;font-size:13px;color:var(--muted);">
         Loading sync details...
       </div>
     </div>
@@ -660,6 +734,12 @@
       <a href="https://checkrstatus.com" target="_blank" style="color:var(--teal);text-decoration:none;">Checkr Status ↗</a>
       &nbsp;·&nbsp;
       <a href="https://status.docusign.com" target="_blank" style="color:var(--teal);text-decoration:none;">DocuSign Status ↗</a>
+      &nbsp;·&nbsp;
+      <a href="https://status.parchment.com" target="_blank" style="color:var(--teal);text-decoration:none;">Parchment Status ↗</a>
+      &nbsp;·&nbsp;
+      <a href="https://status.salesforce.com/products/Tableau" target="_blank" style="color:var(--teal);text-decoration:none;">Tableau Status ↗</a>
+      &nbsp;·&nbsp;
+      <a href="https://status.smartsheet.com" target="_blank" style="color:var(--teal);text-decoration:none;">Smartsheet Status ↗</a>
     </div>
   </div>
 
@@ -723,8 +803,16 @@
               <option value="Greenhouse">Greenhouse</option>
               <option value="Snowflake">Snowflake</option>
               <option value="Checkr">Checkr</option>
+              <option value="DocuSign">DocuSign</option>
               <option value="DocuSign eSignature">DocuSign eSignature</option>
               <option value="DocuSign Third Party Services">DocuSign — Third Party Services</option>
+              <option value="Smartsheet">Smartsheet</option>
+              <option value="Tableau">Tableau (Americas)</option>
+              <option value="Parchment">Parchment</option>
+              <option value="Parchment Award - Transcript Services">Parchment — Transcript Services</option>
+              <option value="Parchment Award - Diploma, Certificate, Badge, CLR">Parchment — Diploma, Certificate, Badge, CLR</option>
+              <option value="Parchment Integrations">Parchment — Integrations</option>
+              <option value="Parchment Print">Parchment — Print</option>
               <option value="LeadSquared">LeadSquared</option>
             </optgroup>
           </select>
@@ -827,8 +915,16 @@
       const canvas_studio      = data.canvas_studio      || {};
       const snowflake          = data.snowflake          || {};
       const checkr                 = data.checkr                 || {};
+      const docusign               = data.docusign               || {};
       const docusign_esignature    = data.docusign_esignature    || {};
       const docusign_thirdparty    = data.docusign_thirdparty    || {};
+      const smartsheet             = data.smartsheet             || {};
+      const tableau                = data.tableau                || {};
+      const parchment              = data.parchment              || {};
+      const parchment_transcript   = data.parchment_transcript   || {};
+      const parchment_diploma      = data.parchment_diploma      || {};
+      const parchment_integrations = data.parchment_integrations || {};
+      const parchment_print        = data.parchment_print        || {};
       const school_aviation  = data.school_aviation  || {};
       const school_centura   = data.school_centura   || {};
       const school_tidewater = data.school_tidewater || {};
@@ -868,8 +964,16 @@
       buildHourlyBar('b-canvas-studio',      canvas_studio);
       buildHourlyBar('b-snowflake',          snowflake);
       buildHourlyBar('b-checkr',                 checkr);
+      buildHourlyBar('b-docusign',               docusign);
       buildHourlyBar('b-docusign_esignature',    docusign_esignature);
       buildHourlyBar('b-docusign_thirdparty',    docusign_thirdparty);
+      buildHourlyBar('b-smartsheet',             smartsheet);
+      buildHourlyBar('b-tableau',                tableau);
+      buildHourlyBar('b-parchment',              parchment);
+      buildHourlyBar('b-parchment_transcript',   parchment_transcript);
+      buildHourlyBar('b-parchment_diploma',      parchment_diploma);
+      buildHourlyBar('b-parchment_integrations', parchment_integrations);
+      buildHourlyBar('b-parchment_print',        parchment_print);
       buildHourlyBar('b-school-aviation',  school_aviation);
       buildHourlyBar('b-school-centura',   school_centura);
       buildHourlyBar('b-school-tidewater', school_tidewater);
@@ -887,7 +991,9 @@
        'b-greenhouse-website','b-greenhouse-recruiting','b-greenhouse-harvest','b-greenhouse-jobboards',
        'b-sinch','b-sinch-connectivity','b-sinch-contactpro','b-sinch-campaigns','b-sinch-chatalayer',
        'b-instructure','b-canvas-lms','b-canvas-mobile','b-canvas-studio',
-       'b-snowflake','b-checkr','b-docusign_esignature','b-docusign_thirdparty',
+       'b-snowflake','b-checkr','b-docusign','b-docusign_esignature','b-docusign_thirdparty',
+       'b-smartsheet','b-tableau',
+       'b-parchment','b-parchment_transcript','b-parchment_diploma','b-parchment_integrations','b-parchment_print',
        'b-school-aviation','b-school-centura','b-school-tidewater',
        'b-aim-admissions','b-aim-campuses','b-aim-programs','b-aim-resources','b-aim-about'].forEach(buildNoDataBar);
     });
@@ -961,8 +1067,16 @@
         if (data.canvas_studio)      updateIndicator('row-canvas-studio',      data.canvas_studio);
         if (data.snowflake)          updateIndicator('row-snowflake',           data.snowflake);
         if (data.checkr)                 updateIndicator('row-checkr',                  data.checkr);
-        if (data.docusign_esignature)    updateIndicator('row-docusign_esignature',     data.docusign_esignature);
-        if (data.docusign_thirdparty)    updateIndicator('row-docusign_thirdparty',     data.docusign_thirdparty);
+        if (data.docusign)               updateIndicator('row-docusign',                 data.docusign);
+        if (data.docusign_esignature)    updateIndicator('row-docusign_esignature',      data.docusign_esignature);
+        if (data.docusign_thirdparty)    updateIndicator('row-docusign_thirdparty',      data.docusign_thirdparty);
+        if (data.smartsheet)             updateIndicator('row-smartsheet',               data.smartsheet);
+        if (data.tableau)                updateIndicator('row-tableau',                  data.tableau);
+        if (data.parchment)              updateIndicator('row-parchment',                data.parchment);
+        if (data.parchment_transcript)   updateIndicator('row-parchment_transcript',     data.parchment_transcript);
+        if (data.parchment_diploma)      updateIndicator('row-parchment_diploma',        data.parchment_diploma);
+        if (data.parchment_integrations) updateIndicator('row-parchment_integrations',   data.parchment_integrations);
+        if (data.parchment_print)        updateIndicator('row-parchment_print',          data.parchment_print);
         if (data.optimus)        updateIndicator('row-opt-web', data.optimus);
         if (data.leadsquared) {
           updateIndicator('row-leadsquared', data.leadsquared);
