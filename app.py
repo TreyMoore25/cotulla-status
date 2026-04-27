@@ -1435,15 +1435,23 @@ def send_alert(service, uptime_pct, recovered=False):
 def check_and_alert(service, uptime_pct):
     if uptime_pct is None:
         return
+    # Require at least 1 hour of data (12 pings) before alerting — prevents
+    # false alarms immediately after a fresh DB (app restart wipes SQLite).
+    cutoff_24h = datetime.now(timezone.utc) - timedelta(days=1)
+    ping_count = PingResult.query.filter(
+        PingResult.service == service,
+        PingResult.pinged_at >= cutoff_24h,
+    ).count()
+    if ping_count < 12:
+        return
+
     state = AlertState.query.filter_by(service=service).first()
     if state is None:
         state = AlertState(service=service, in_alert=False)
         db.session.add(state)
 
-    currently_degraded = uptime_pct < ALERT_THRESHOLD
-    # Recovery uses recent ping status — fires as soon as service is back up,
-    # not when the 24h rolling average climbs back above the threshold.
-    currently_operational = get_latest_ping_status(service)["status"] == "operational"
+    currently_degraded   = uptime_pct < ALERT_THRESHOLD
+    currently_operational = uptime_pct >= ALERT_THRESHOLD
 
     if currently_degraded and not state.in_alert:
         state.in_alert = True
@@ -1529,7 +1537,7 @@ def uptime_pct_from_hourly(hourly):
     if not hourly:
         return None
     values = list(hourly.values())
-    return round(sum(values) / len(values), 2)
+    return min(round(sum(values) / len(values), 2), 99.999)
 
 
 def get_uptime(service, days=90):
@@ -1544,7 +1552,7 @@ def get_uptime(service, days=90):
         PingResult.pinged_at >= cutoff,
         PingResult.success == True,
     ).count()
-    return round((success / total) * 100, 3)
+    return min(round((success / total) * 100, 3), 99.999)
 
 
 def get_uptime_batch(services):
@@ -1567,7 +1575,7 @@ def get_uptime_batch(services):
         )
         for row in rows:
             if row.total:
-                result[row.service][key] = round((row.successes / row.total) * 100, 3)
+                result[row.service][key] = min(round((row.successes / row.total) * 100, 3), 99.999)
     return result
 
 
